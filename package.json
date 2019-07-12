@@ -1,0 +1,20 @@
+{
+  "name": "xcalc",
+  "version": "0.1.0-alpha",
+  "description": "ANTLR4 based expression calculator with variable assignment.",
+  "main": "./dist/XCalc.js",
+  "scripts": {
+    "grammar": "antlr4ts -visitor ./ANTLR/XCalc.g4",
+    "tsc": "tsc",
+    "test": "mocha tests/**/*test.js --reporter spec"
+  },
+  "author": "J. Lipstate",
+  "license": "MIT",
+  "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.3"
+  },
+  "devDependencies": {
+    "antlr4ts-cli": "^0.5.0-alpha.3",
+    "typescript": "^3.5.2"
+  }
+}

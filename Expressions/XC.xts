@@ -1,0 +1,976 @@
+import { XCalcVisitor } from "../ANTLR/XCalcVisitor";
+import {
+  ModuloContext,
+  PowerContext,
+  ValContext,
+  AssignmentContext,
+  FunctionContext,
+  RootContext,
+  MultiplyContext,
+  ImplicitMultiplyContext,
+  DivideContext,
+  AddContext,
+  SubtractContext,
+  ParenContext,
+  AbsValueContext,
+  NegateContext
+} from "../ANTLR/XCalcParser";
+import { AbstractParseTreeVisitor } from "antlr4ts/tree";
+
+class InstantiationVisitor
+  extends AbstractParseTreeVisitor<BaseExpression>
+  implements XCalcVisitor<BaseExpression> {
+  protected defaultResult(): BaseExpression {
+    return new Value(undefined);
+  }
+  private _writeToConsole = false;
+  public AssignedVariables: Map<string, number> = new Map();
+  public AllValues: Value[] = [];
+
+  public visitModulo(ctx: ModuloContext): BaseExpression {
+    var right = this.visit(ctx._right);
+    var left = this.visit(ctx._left);
+    if (this._writeToConsole)
+      console.log(
+        `"Modulo Context: [${ctx._left.text}] ^ [${ctx._right.text}]`
+      );
+    return new Binary(left, right, BinaryOperator.Modulo);
+  }
+
+  public visitPower(ctx: PowerContext): BaseExpression {
+    var right = this.visit(ctx._right);
+    var left = this.visit(ctx._left);
+    if (this._writeToConsole)
+      console.log(
+        `Exponent Context: [${ctx._left.text}] ^ [${ctx._right.text}]`
+      );
+    return new Binary(left, right, BinaryOperator.Power);
+  }
+  public visitVal(ctx: ValContext): BaseExpression {
+    //console.log($"Val Context: [{ctx.text}]");
+    var v = new Value(ctx.text);
+    this.AllValues.push(v);
+    if (
+      v.evaluated != null &&
+      (v.evaluated as Value).valueType == ValueType.Number &&
+      v.valueType == ValueType.Variable
+    )
+      this.AssignedVariables.set(
+        v.value.toString(),
+        (v.evaluated as Value).value
+      );
+    return v;
+  }
+  public visitAssignment(ctx: AssignmentContext): BaseExpression {
+    if (this._writeToConsole)
+      console.log(
+        `Assignment Context: [${ctx._left.text}] = [${ctx._right.text}]`
+      );
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+    if (left instanceof Value && right instanceof Value) {
+      var lVal = left as Value;
+      var rVal = right as Value;
+      if (
+        lVal.valueType == ValueType.Variable &&
+        rVal.valueType == ValueType.Number
+      )
+        this.AssignedVariables.set(lVal.value.toString(), rVal.value);
+      else if (
+        rVal.valueType == ValueType.Variable &&
+        lVal.valueType == ValueType.Number
+      )
+        this.AssignedVariables.set(rVal.value.toString(), lVal.value);
+      //both are variables:
+      else {
+        this.AssignedVariables.set(rVal.value, lVal.value);
+        this.AssignedVariables.set(lVal.value, rVal.value);
+      }
+    }
+
+    return new Binary(left, right, BinaryOperator.AssignTo);
+  }
+  public visitFunction(ctx: FunctionContext): BaseExpression {
+    var arg = this.visit(ctx._arg);
+    let arg2 = null;
+    if (ctx._arg2 != null) {
+      arg2 = this.visit(ctx._arg2);
+      return new Function2(arg, arg2, ctx.func().text);
+    }
+    if (this._writeToConsole)
+      console.log(`Function Context: [${ctx._fn.text}]  [${ctx._arg.text}]`);
+    return new Function1(arg, ctx.func().text);
+  }
+  public visitRoot(ctx: RootContext): BaseExpression {
+    var right = this.visit(ctx._right);
+    let left = new Value(2) as BaseExpression; //Default to Sqrt
+    if (ctx._left != null) left = this.visit(ctx._left);
+    if (this._writeToConsole)
+      console.log(
+        `Root Context: Root-Power:[${left.toString()}]  Value:[${
+          ctx._right.text
+        }]`
+      );
+    return new Binary(left, right, BinaryOperator.NthRoot, "\u221a");
+  }
+  public visitMultiply(ctx: MultiplyContext): BaseExpression {
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+    if (this._writeToConsole)
+      console.log(
+        `Explicit Multiply: [${ctx._left.text}] ${ctx._op.text} [${
+          ctx._right.text
+        }]`
+      );
+    return new Binary(left, right, BinaryOperator.Multiply, ctx._op.text);
+  }
+  public visitImplicitMultiply(ctx: ImplicitMultiplyContext): BaseExpression {
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+
+    var leftIsNumber = BaseExpression.isNumber(left);
+    var rightIsNumber = BaseExpression.isNumber(right);
+    var rightAsUnary = right as Unary;
+    //Case: 2-1 is treated as 2 impl -1 instead of subtract:
+    if (leftIsNumber && rightIsNumber) {
+      var lVal = (left as Value).value;
+      var rVal = (right as Value).value;
+      if (rVal > 0)
+        throw new Error(
+          `Expected Right Value Negative in Implicit Multiply Guard. L:${lVal}, R:${rVal}`
+        );
+      return new Binary(left, right, BinaryOperator.Add, "+");
+    }
+    //Case a-2 is treated as a * (-2), also for a-b
+    if (rightIsNumber) {
+      var rVal = (right as Value).value;
+      if (rVal < 0) return new Binary(left, right, BinaryOperator.Add);
+    } else if (rightAsUnary != null) {
+      if (rightAsUnary.operator == UnaryOperator.Negate)
+        return new Binary(left, right, BinaryOperator.Add);
+    }
+
+    if (this._writeToConsole)
+      console.log(
+        `Implicit Multiply: [${ctx._left.text}] * [${ctx._right.text}]`
+      );
+    return new Binary(left, right, BinaryOperator.Multiply, null);
+  }
+  public visitDivide(ctx: DivideContext): BaseExpression {
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+    if (this._writeToConsole)
+      console.log(`Divide Context: [${ctx._left.text}] / [${ctx._right.text}]`);
+    return new Binary(left, right, BinaryOperator.Divide, "/");
+  }
+  public visitAdd(ctx: AddContext): BaseExpression {
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+    if (this._writeToConsole)
+      console.log(`Add: [${ctx._left.text}] + [${ctx._right.text}]`);
+    return new Binary(left, right, BinaryOperator.Add, "+");
+  }
+  public visitSubtract(ctx: SubtractContext): BaseExpression {
+    var left = this.visit(ctx._left);
+    var right = this.visit(ctx._right);
+    if (this._writeToConsole)
+      console.log(`Add: [${ctx._left.text}] - [${ctx._right.text}]`);
+    return new Binary(left, right, BinaryOperator.Subtract, "-");
+  }
+  public visitParen(ctx: ParenContext): BaseExpression {
+    if (this._writeToConsole) console.log(`Paren Context: [${ctx.text}]`);
+    return new Unary(this.visit(ctx.expr()), UnaryOperator.Parenthesis);
+  }
+  public visitAbsValue(ctx: AbsValueContext): BaseExpression {
+    if (this._writeToConsole) console.log(`AbsValue Context: [${ctx.text}]`);
+    return new Unary(this.visit(ctx.expr()), UnaryOperator.AbsoluteValue);
+  }
+  public visitNegate(ctx: NegateContext): BaseExpression {
+    if (this._writeToConsole) console.log(`Negate Context: [${ctx.text}]`);
+    return new Unary(this.visit(ctx.expr()), UnaryOperator.Negate);
+  }
+}
+
+
+abstract class BaseExpression {
+    public evaluated: BaseExpression;
+    public isResult: boolean;
+    public abstract evaluate(assignedValues: Map<string, number>): BaseExpression;
+    public abstract print(printResult: boolean): string;
+    public abstract printExpr(printResult: boolean): string;
+    public static isNumber(expr: BaseExpression): boolean {
+      const val = expr as Value;
+      if (expr instanceof Value && val.valueType == ValueType.Number) {
+        return true;
+      } else return false;
+    }
+  }
+  
+
+
+class Value extends BaseExpression {
+  public value: any;
+  public valueType: ValueType = ValueType.Unknown;
+  public isResult: boolean = false;
+  constructor(value: any) {
+    super();
+    this.value = value || console.error(`Value Expression was assigned null.`);
+    this._setValueType();
+    if (this.valueType == ValueType.Number) this.evaluated = this;
+  }
+  private _setValueType(): void {
+    let v = this.value;
+    if (!isNaN(Number(v))) {
+      this.valueType = ValueType.Number;
+      this.value = Number(v);
+    } else if (v.toString().toLowerCase() === "true") {
+      this.valueType = ValueType.Boolean;
+      this.value = true;
+    } else if (v.toString().toLowerCase() === "false") {
+      this.valueType = ValueType.Boolean;
+      this.value = false;
+    } else {
+      this.valueType = ValueType.Variable;
+      this.value = v;
+    }
+  }
+  public print(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    return printResult
+      ? this.evaluated.print(printResult)
+      : this.value.toString();
+  }
+  public printExpr(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    return printResult
+      ? this.printExpr(printResult)
+      : `${this.value} (${this.valueType})`;
+  }
+  public evaluate(assignedValues: Map<string, Number>): BaseExpression {
+    if (this.valueType == ValueType.Variable) {
+      if (this.value == String.fromCharCode(parseInt("03c0", 16)))
+        this.evaluated = new Value(Math.PI);
+      else if (assignedValues.has(this.value.toString())) {
+        this.evaluated = new Value(assignedValues.get(this.value));
+      } else this.evaluated = new Value(this.value);
+    } else this.evaluated = new Value(this.value); //TODO: Refactor this to not repeat
+    this.evaluated.isResult = true;
+    return this;
+  }
+}
+enum ValueType {
+  Unknown = "unknown",
+  Variable = "variable",
+  Number = "number",
+  Boolean = "boolean"
+}
+
+enum UnaryOperator {
+  Negate = "Negate",
+  Parenthesis = "Parenthesis",
+  AbsoluteValue = "AbsoluteValue"
+}
+
+class Unary extends BaseExpression {
+  public inner: BaseExpression;
+  public operator: UnaryOperator;
+  public isResult: boolean = false;
+  constructor(expression: BaseExpression, action: UnaryOperator) {
+    super();
+    this.inner = expression;
+    this.operator = action;
+    return this;
+  }
+  public evaluate(assignedValues: Map<string, number>): BaseExpression {
+    this.inner.evaluate(assignedValues);
+    var evaluatedInner = this.inner.evaluated;
+    if (this.operator == UnaryOperator.Negate) {
+      //this.Negate(evaluatedInner, assignedValues);
+      const iVal = evaluatedInner as Value;
+      if (iVal) {
+        if (iVal.valueType == ValueType.Number) {
+          this.evaluated = new Value(iVal.value * -1);
+        } else if (iVal.valueType == ValueType.Boolean) {
+          this.evaluated = new Value(!iVal.value);
+        } else {
+          this.evaluated = new Unary(this.inner, UnaryOperator.Negate);
+        }
+      }
+      //inner is *not* a value
+      else {
+        let binVal: Binary = new Binary(
+          new Value(-1),
+          evaluatedInner,
+          BinaryOperator.Multiply
+        );
+        binVal.evaluate(assignedValues);
+        this.evaluated = binVal.evaluated;
+      }
+    } else if (this.operator == UnaryOperator.Parenthesis) {
+      this.evaluated = this.inner;
+    } else if (this.operator == UnaryOperator.AbsoluteValue) {
+      if (BaseExpression.isNumber(evaluatedInner)) {
+        const val = evaluatedInner as Value;
+        //TODO: FIX INSTANCEOF IF I NEED OR NOT
+        this.evaluated = new Value(Math.abs(val.value));
+      } else
+        this.evaluated = new Unary(this.inner, UnaryOperator.AbsoluteValue);
+    } else throw new Error("Not implemented.");
+    this.evaluated.isResult = true;
+    return this;
+  }
+  public print(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.print(printResult);
+    }
+    // Print Expression As-Is:
+    const inner = this.inner.print(false);
+    switch (this.operator) {
+      case UnaryOperator.AbsoluteValue:
+        return `|${inner}|`;
+      case UnaryOperator.Negate:
+        return `-${inner}`;
+      case UnaryOperator.Parenthesis:
+        return `(${inner})`;
+      default:
+        return "unary fell through print()";
+    }
+  }
+  public printExpr(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.print(printResult);
+    }
+    return `${this.operator} [${this.inner}]`;
+  }
+}
+
+enum Function1Operator {
+  sin = "sin",
+  cos = "cos",
+  tan = "tan",
+  asin = "asin",
+  acos = "acos",
+  atan = "atan",
+  //r2d,
+  //d2r,
+
+  abs = "abs",
+  ceil = "ceil",
+  floor = "floor",
+  log10 = "log10",
+  ln = "ln",
+  exp = "exp",
+  sqrt = "sqrt",
+  unknown = "unknown"
+}
+class Function1 extends BaseExpression {
+  public operator: Function1Operator;
+  public argument: BaseExpression;
+  private _operatorFunc: (arg: number) => number;
+  private _opSymbol: string | null = null;
+  public isResult: boolean = false;
+  // private Func<double, double> this._operatorFunc;
+
+  constructor(arg: BaseExpression, action: string | Function1Operator) {
+    super();
+    this.argument = arg;
+    this.operator = this.getOperatorFunc(action as string);
+    this._opSymbol = this.operator.toString();
+  }
+
+  private getOperatorFunc(action: string): Function1Operator {
+    switch (action.toLowerCase()) {
+      //Angles:
+      case "sin":
+        this._operatorFunc = Math.sin;
+        return Function1Operator.sin;
+      case "cos":
+        this._operatorFunc = Math.cos;
+        return Function1Operator.cos;
+      case "tan":
+        this._operatorFunc = Math.tan;
+        return Function1Operator.tan;
+      case "asin":
+        this._operatorFunc = Math.asin;
+        return Function1Operator.asin;
+      case "acos":
+        this._operatorFunc = Math.acos;
+        return Function1Operator.acos;
+      case "atan":
+        this._operatorFunc = Math.atan;
+        return Function1Operator.atan;
+      //Others
+      case "abs":
+        this._operatorFunc = Math.abs;
+        return Function1Operator.abs;
+      case "ceil":
+        this._operatorFunc = Math.ceil;
+        return Function1Operator.ceil;
+      case "floor":
+        this._operatorFunc = Math.floor;
+        return Function1Operator.floor;
+      case "log10":
+        this._operatorFunc = Math.log10;
+        return Function1Operator.log10;
+      case "ln":
+        this._operatorFunc = Math.log;
+        return Function1Operator.ln;
+      case "exp":
+        this._operatorFunc = Math.exp;
+        return Function1Operator.exp;
+      case "sqrt":
+        this._operatorFunc = Math.sqrt;
+        return Function1Operator.sqrt;
+    }
+    return Function1Operator.unknown;
+  }
+  public evaluate(assignedValues: Map<string, number>): BaseExpression {
+    this.argument.evaluate(assignedValues);
+
+    if (BaseExpression.isNumber(this.argument.evaluated)) {
+      var value = (this.argument.evaluated as Value).value;
+      this.evaluated = new Value(this._operatorFunc(value));
+    } else {
+      this.evaluated = new Function1(this.argument, this.operator);
+    }
+    this.evaluated.isResult = true;
+    return this;
+  }
+
+  public print(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.print(printResult);
+    }
+    return `${this.operator}(${this.argument.print(printResult)})`;
+  }
+  public printExpr(printResult: boolean): string {
+    return this.print(printResult);
+  }
+}
+
+enum Function2Operator {
+  undefined = "undefined",
+  atan2 = "atan2",
+  log = "log",
+  pow = "pow"
+}
+
+class Function2 extends BaseExpression {
+  public operator: Function2Operator;
+  public argument1: BaseExpression;
+  public argument2: BaseExpression;
+  private _operatorFunc: (arg1: number, arg2: number) => number;
+  private _opSymbol: string | null = null;
+  public isResult: boolean = false;
+  constructor(
+    arg1: BaseExpression,
+    arg2: BaseExpression,
+    action: string | Function2Operator
+  ) {
+    super();
+    this.argument1 = arg1;
+    this.argument2 = arg2;
+    this.operator = this.getOperatorFunc(action as string);
+    this._opSymbol = this.operator.toString();
+  }
+
+  private getOperatorFunc(action: string): Function2Operator {
+    switch (action.toLowerCase()) {
+      case "atan2":
+        this._operatorFunc = Math.atan2;
+        return Function2Operator.atan2;
+      case "log":
+        this._operatorFunc = Math.log;
+        return Function2Operator.log;
+      case "pow":
+        this._operatorFunc = Math.pow;
+        return Function2Operator.pow;
+    }
+    return Function2Operator.undefined;
+  }
+  public evaluate(assignedValues: Map<string, number>): BaseExpression {
+    this.argument1.evaluate(assignedValues);
+    this.argument2.evaluate(assignedValues);
+    const arg1IsNumber = BaseExpression.isNumber(this.argument1.evaluated);
+    const arg2IsNumber = BaseExpression.isNumber(this.argument2.evaluated);
+
+    if (arg1IsNumber && arg2IsNumber) {
+      var value = (this.argument1.evaluated as Value).value;
+      var value2 = (this.argument2.evaluated as Value).value;
+      this.evaluated = new Value(this._operatorFunc(value, value2));
+    } else if (arg1IsNumber) {
+      var value = (this.argument1.evaluated as Value).value;
+      this.evaluated = new Function2(
+        new Value(value),
+        this.argument2.evaluated,
+        this.operator
+      );
+    } else if (arg2IsNumber) {
+      var value2 = (this.argument2.evaluated as Value).value;
+      this.evaluated = new Function2(
+        this.argument1.evaluated,
+        new Value(value2),
+        this.operator
+      );
+    } else {
+      this.evaluated = new Function2(
+        this.argument1,
+        this.argument2,
+        this.operator
+      );
+    }
+    this.evaluated.isResult = true;
+    return this;
+  }
+  public print(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.print(printResult);
+    }
+    return ` ${this.operator}(${this.argument1.print(
+      printResult
+    )}, ${this.argument2.print(printResult)}) `;
+  }
+  public printExpr(printResult: boolean): string {
+    return this.print(printResult);
+  }
+}
+
+enum BinaryOperator {
+  //Assignment
+  AssignTo = "AssignTo",
+  //Arithmitic
+  Add = "Add",
+  Subtract = "Subtract",
+  Multiply = "Multiply",
+  Divide = "Divide",
+  Power = "Power",
+  NthRoot = "NthRoot",
+  Modulo = "Modulo",
+  //Logical
+  And = "And",
+  Or = "Or",
+  //Relational
+  LessThan = "LessThan",
+  LessThanOrEqual = "LessThanOrEqual",
+  GreaterThan = "GreaterThan",
+  GreaterThanOrEqual = "GreaterThanOrEqual",
+  EqualTo = "EqualTo",
+  NotEqual = "NotEqual"
+}
+class Binary extends BaseExpression {
+  //Properties
+  public left: BaseExpression;
+  public right: BaseExpression;
+  public operator: BinaryOperator;
+  private _opSymbol: string;
+  public isResult: boolean = false;
+  //CTOR
+  constructor(
+    left: BaseExpression,
+    right: BaseExpression,
+    action: BinaryOperator,
+    opSymbol: string | null = null
+  ) {
+    super();
+    this.left = left;
+    this.right = right;
+    this.operator = action;
+    if (opSymbol == null) this._opSymbol = this._getOpSymbol();
+    else this._opSymbol = opSymbol;
+    return this;
+  }
+  //Functions
+  private _getOpSymbol(): string {
+    switch (this.operator) {
+      case BinaryOperator.Add:
+        return "+";
+      case BinaryOperator.And:
+        return "&&";
+      case BinaryOperator.AssignTo:
+        return "=";
+      case BinaryOperator.Divide:
+        return "/";
+      case BinaryOperator.EqualTo:
+        return "==";
+      case BinaryOperator.GreaterThan:
+        return ">";
+      case BinaryOperator.GreaterThanOrEqual:
+        return "≥";
+      case BinaryOperator.LessThan:
+        return "<";
+      case BinaryOperator.LessThanOrEqual:
+        return "≤";
+      case BinaryOperator.Modulo:
+        return "%";
+      case BinaryOperator.Multiply:
+        return "∙";
+      case BinaryOperator.NotEqual:
+        return "!=";
+      case BinaryOperator.NthRoot:
+        return "√";
+      case BinaryOperator.Or:
+        return "||";
+      case BinaryOperator.Power:
+        return "^";
+      case BinaryOperator.Subtract:
+        return "-";
+      default:
+        return "";
+    }
+  }
+  public evaluate(assignedValues: Map<string, number>): BaseExpression {
+    //Evaluate Sub-Expressions
+    this.left.evaluate(assignedValues);
+    this.right.evaluate(assignedValues);
+    //Determine if any are numbers:
+    var leftIsNumber = BaseExpression.isNumber(this.left.evaluated);
+    var rightIsNumber = BaseExpression.isNumber(this.right.evaluated);
+    switch (this.operator) {
+      case BinaryOperator.Add:
+        this.Add(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.AssignTo:
+        this.AssignTo(leftIsNumber, rightIsNumber, assignedValues);
+        break;
+      case BinaryOperator.Divide:
+        this.Divide(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.Multiply:
+        this.Multiply(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.Modulo:
+        this.Modulo(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.NthRoot:
+        this.NthRoot(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.Power:
+        this.Power(leftIsNumber, rightIsNumber);
+        break;
+      case BinaryOperator.Subtract:
+        this.Subtract(leftIsNumber, rightIsNumber);
+        break;
+      default:
+        break;
+    }
+    this.evaluated.isResult = true;
+    return this;
+  }
+
+  private Modulo(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        (this.left.evaluated as Value).value %
+          (this.right.evaluated as Value).value
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Modulo,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Modulo,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Modulo,
+        this._opSymbol
+      );
+  }
+
+  private Power(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        Math.pow(
+          (this.left.evaluated as Value).value,
+          (this.right.evaluated as Value).value
+        )
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Power,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Power,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Power,
+        this._opSymbol
+      );
+  }
+
+  private NthRoot(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        Math.pow(
+          (this.right.evaluated as Value).value, //reverse L & R For Power Fn
+          1 / (this.left.evaluated as Value).value
+        )
+      );
+    //TODO VERIFY DIVIDE BY ZERO, add i functionality?
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.NthRoot,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.NthRoot,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.NthRoot,
+        this._opSymbol
+      );
+  }
+
+  private Multiply(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    var lu = this.left as Unary;
+    var ru = this.right as Unary;
+    if (
+      (lu != null && lu.operator == UnaryOperator.Parenthesis) ||
+      (ru != null && ru.operator == UnaryOperator.Parenthesis)
+    ) {
+      console.log("L or R are in a group");
+    }
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        (this.left.evaluated as Value).value *
+          (this.right.evaluated as Value).value
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Multiply,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Multiply,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Multiply,
+        this._opSymbol
+      );
+  }
+
+  private Divide(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        (this.left.evaluated as Value).value /
+          (this.right.evaluated as Value).value
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Divide,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Divide,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Divide,
+        this._opSymbol
+      );
+  }
+
+  private AssignTo(
+    leftIsNumber: boolean,
+    rightIsNumber: boolean,
+    assignedValues: Map<string, number>
+  ): void {
+    var lNum = leftIsNumber ? (this.left.evaluated as Value).value : Number.NaN;
+    var rNum = rightIsNumber
+      ? (this.right.evaluated as Value).value
+      : Number.NaN;
+    //Both are numbers: Assignment is redundant.
+    if (leftIsNumber && rightIsNumber) {
+      var lve = this.left as Value;
+      var rve = this.right as Value;
+      if (assignedValues.has(lve.value.toString())) {
+        this.evaluated = new Value(assignedValues.get(lve.value.toString()));
+      } else if (assignedValues.has(rve.value.toString())) {
+        this.evaluated = new Value(assignedValues.get(rve.value.toString()));
+      } else {
+        throw new Error(
+          `${this} is Assign-To, however both sides are numbers. An Equal To Check should be performed. (Operator ==)`
+        );
+      }
+    }
+    //L is #, R is Var
+    else if (leftIsNumber) {
+      var rVar = this.right.evaluated;
+
+      var rve = rVar as Value;
+      if (rve != null) {
+        //Try to add RVar & LNum to Dictionary:
+        if (!assignedValues.has(rve.value.toString())) {
+          assignedValues.set(rve.value.toString(), lNum);
+          this.right.evaluate(assignedValues);
+          this.evaluated = new Value(lNum);
+        }
+      } else {
+        this.evaluated = new Binary(
+          new Value(lNum),
+          this.right.evaluated,
+          BinaryOperator.AssignTo,
+          this._opSymbol
+        );
+      }
+    }
+    //R is #, L is Var
+    else if (rightIsNumber) {
+      var lVar = this.left.evaluated;
+
+      var lve = lVar as Value;
+      if (lve != null) {
+        //Try to add RVar & LNum to Dictionary:
+        if (!assignedValues.has(lve.value.toString())) {
+          assignedValues.set(lve.value.toString(), rNum);
+          this.left.evaluate(assignedValues);
+          this.evaluated = new Value(rNum);
+        }
+      } else {
+        this.evaluated = new Binary(
+          this.left.evaluated,
+          new Value(rNum),
+          BinaryOperator.AssignTo,
+          this._opSymbol
+        );
+      }
+    }
+    //Neither are #s
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.AssignTo,
+        this._opSymbol
+      );
+  }
+  private Add(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        (this.left.evaluated as Value).value +
+          (this.right.evaluated as Value).value
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Add,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Add,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Add,
+        this._opSymbol
+      );
+  }
+
+  private Subtract(leftIsNumber: boolean, rightIsNumber: boolean): void {
+    if (leftIsNumber && rightIsNumber)
+      this.evaluated = new Value(
+        (this.left.evaluated as Value).value -
+          (this.right.evaluated as Value).value
+      );
+    else if (leftIsNumber)
+      this.evaluated = new Binary(
+        new Value((this.left.evaluated as Value).value),
+        this.right.evaluated,
+        BinaryOperator.Subtract,
+        this._opSymbol
+      );
+    else if (rightIsNumber)
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        new Value((this.right.evaluated as Value).value),
+        BinaryOperator.Subtract,
+        this._opSymbol
+      );
+    else
+      this.evaluated = new Binary(
+        this.left.evaluated,
+        this.right.evaluated,
+        BinaryOperator.Subtract,
+        this._opSymbol
+      );
+  }
+
+  public print(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.print(printResult);
+    }
+    // Print Expression As-Is:
+    return `${this.left.print(printResult)} ${
+      this._opSymbol
+    } ${this.right.print(printResult)}`;
+  }
+
+  public printExpr(printResult: boolean): string {
+    if (this.isResult) printResult = false; //Already a result, ensure no circular reference
+    if (printResult) {
+      return this.evaluated.printExpr(printResult);
+    }
+    // Print Expression As-Is:
+    return `[${this.left.printExpr(printResult)}] ${
+      this.operator
+    } [${this.right.printExpr(printResult)}]`;
+  }
+}
+
