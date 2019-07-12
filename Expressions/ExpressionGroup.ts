@@ -6,7 +6,6 @@ import { BaseExpression } from "./BaseExpression";
 // import { Unary } from "./Unary";
 import { Value, ValueType } from "./Value";
 import { InstantiationVisitor } from "./InstantiationVisitor";
-import { isNumber } from "util";
 import { VariableMap } from "./VariableMap";
 
 export class ExpressionGroup {
