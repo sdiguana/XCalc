@@ -28,67 +28,63 @@ import { XCalcVisitor } from "./XCalcVisitor";
 
 
 export class XCalcParser extends Parser {
-	public static readonly T__0 = 1;
-	public static readonly T__1 = 2;
-	public static readonly T__2 = 3;
-	public static readonly T__3 = 4;
-	public static readonly T__4 = 5;
-	public static readonly T__5 = 6;
-	public static readonly T__6 = 7;
-	public static readonly T__7 = 8;
-	public static readonly T__8 = 9;
-	public static readonly T__9 = 10;
-	public static readonly T__10 = 11;
-	public static readonly T__11 = 12;
-	public static readonly T__12 = 13;
-	public static readonly T__13 = 14;
-	public static readonly T__14 = 15;
-	public static readonly T__15 = 16;
-	public static readonly T__16 = 17;
-	public static readonly T__17 = 18;
-	public static readonly T__18 = 19;
-	public static readonly T__19 = 20;
-	public static readonly T__20 = 21;
-	public static readonly T__21 = 22;
-	public static readonly T__22 = 23;
-	public static readonly T__23 = 24;
-	public static readonly T__24 = 25;
-	public static readonly T__25 = 26;
-	public static readonly T__26 = 27;
-	public static readonly T__27 = 28;
-	public static readonly T__28 = 29;
-	public static readonly MULT = 30;
-	public static readonly POWER = 31;
-	public static readonly ROOT = 32;
-	public static readonly NUMBER = 33;
-	public static readonly E = 34;
-	public static readonly STRING = 35;
-	public static readonly ID = 36;
-	public static readonly PI = 37;
-	public static readonly WS = 38;
-	public static readonly RULE_xcalcExpr = 0;
-	public static readonly RULE_expr = 1;
-	public static readonly RULE_func = 2;
-	public static readonly RULE_value = 3;
+	public static readonly FN = 1;
+	public static readonly NUMBER = 2;
+	public static readonly ID = 3;
+	public static readonly CONSTANT = 4;
+	public static readonly PI = 5;
+	public static readonly MINUS = 6;
+	public static readonly PLUS = 7;
+	public static readonly MULT = 8;
+	public static readonly DIV = 9;
+	public static readonly POWER = 10;
+	public static readonly ROOT = 11;
+	public static readonly MODULO = 12;
+	public static readonly EQUALS = 13;
+	public static readonly LPAREN = 14;
+	public static readonly RPAREN = 15;
+	public static readonly LBRKT = 16;
+	public static readonly RBRKT = 17;
+	public static readonly LCURLY = 18;
+	public static readonly RCURLY = 19;
+	public static readonly PIPE = 20;
+	public static readonly COMMA = 21;
+	public static readonly AMPERSAND = 22;
+	public static readonly GT = 23;
+	public static readonly GTE = 24;
+	public static readonly LT = 25;
+	public static readonly LTE = 26;
+	public static readonly NE = 27;
+	public static readonly EQ = 28;
+	public static readonly WS = 29;
+	public static readonly RULE_xcalc = 0;
+	public static readonly RULE_equation = 1;
+	public static readonly RULE_expression = 2;
+	public static readonly RULE_multExpr = 3;
+	public static readonly RULE_expExpr = 4;
+	public static readonly RULE_signedAtom = 5;
+	public static readonly RULE_atom = 6;
+	public static readonly RULE_term = 7;
+	public static readonly RULE_group = 8;
+	public static readonly RULE_func = 9;
+	public static readonly RULE_relOp = 10;
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
-		"xcalcExpr", "expr", "func", "value",
+		"xcalc", "equation", "expression", "multExpr", "expExpr", "signedAtom", 
+		"atom", "term", "group", "func", "relOp",
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, "'('", "')'", "'}'", "'['", "']'", "'|'", "'&'", "'-'", "'/'", 
-		"'%'", "'+'", "','", "'='", "'cos'", "'sin'", "'tan'", "'acos'", "'asin'", 
-		"'atan'", "'abs'", "'ceil'", "'floor'", "'log10'", "'ln'", "'exp'", "'sqrt'", 
-		"'atan2'", "'log'", "'pow'", undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, "'\u03C0'",
+		undefined, undefined, undefined, undefined, undefined, undefined, "'-'", 
+		"'+'", undefined, undefined, undefined, undefined, "'%'", "'='", "'('", 
+		"')'", "'['", "']'", "'{'", "'}'", "'|'", "','", "'&'", "'>'", undefined, 
+		"'<'", "'\u2264'", undefined, "'=='",
 	];
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, "MULT", "POWER", "ROOT", "NUMBER", "E", "STRING", 
-		"ID", "PI", "WS",
+		undefined, "FN", "NUMBER", "ID", "CONSTANT", "PI", "MINUS", "PLUS", "MULT", 
+		"DIV", "POWER", "ROOT", "MODULO", "EQUALS", "LPAREN", "RPAREN", "LBRKT", 
+		"RBRKT", "LCURLY", "RCURLY", "PIPE", "COMMA", "AMPERSAND", "GT", "GTE", 
+		"LT", "LTE", "NE", "EQ", "WS",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(XCalcParser._LITERAL_NAMES, XCalcParser._SYMBOLIC_NAMES, []);
 
@@ -113,15 +109,30 @@ export class XCalcParser extends Parser {
 		this._interp = new ParserATNSimulator(XCalcParser._ATN, this);
 	}
 	// @RuleVersion(0)
-	public xcalcExpr(): XcalcExprContext {
-		let _localctx: XcalcExprContext = new XcalcExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 0, XCalcParser.RULE_xcalcExpr);
+	public xcalc(): XcalcContext {
+		let _localctx: XcalcContext = new XcalcContext(this._ctx, this.state);
+		this.enterRule(_localctx, 0, XCalcParser.RULE_xcalc);
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 8;
-			this.expr(0);
-			this.state = 9;
+			this.state = 24;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 0, this._ctx) ) {
+			case 1:
+				{
+				this.state = 22;
+				this.expression();
+				}
+				break;
+
+			case 2:
+				{
+				this.state = 23;
+				this.equation();
+				}
+				break;
+			}
+			this.state = 26;
 			this.match(XCalcParser.EOF);
 			}
 		}
@@ -139,295 +150,115 @@ export class XCalcParser extends Parser {
 		}
 		return _localctx;
 	}
-
-	public expr(): ExprContext;
-	public expr(_p: number): ExprContext;
 	// @RuleVersion(0)
-	public expr(_p?: number): ExprContext {
-		if (_p === undefined) {
-			_p = 0;
-		}
-
-		let _parentctx: ParserRuleContext = this._ctx;
-		let _parentState: number = this.state;
-		let _localctx: ExprContext = new ExprContext(this._ctx, _parentState);
-		let _prevctx: ExprContext = _localctx;
-		let _startState: number = 2;
-		this.enterRecursionRule(_localctx, 2, XCalcParser.RULE_expr, _p);
+	public equation(): EquationContext {
+		let _localctx: EquationContext = new EquationContext(this._ctx, this.state);
+		this.enterRule(_localctx, 2, XCalcParser.RULE_equation);
 		let _la: number;
 		try {
-			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 50;
+			this.state = 43;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 2, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 3, this._ctx) ) {
 			case 1:
+				_localctx = new AssignmentContext(_localctx);
+				this.enterOuterAlt(_localctx, 1);
 				{
-				_localctx = new ParenContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-
-				this.state = 12;
-				this.match(XCalcParser.T__0);
-				this.state = 13;
-				this.expr(0);
-				this.state = 14;
-				this.match(XCalcParser.T__1);
+				this.state = 28;
+				this.expression();
+				this.state = 31;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				do {
+					{
+					{
+					this.state = 29;
+					this.match(XCalcParser.EQUALS);
+					this.state = 30;
+					this.expression();
+					}
+					}
+					this.state = 33;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				} while (_la === XCalcParser.EQUALS);
 				}
 				break;
 
 			case 2:
+				_localctx = new EqualityContext(_localctx);
+				this.enterOuterAlt(_localctx, 2);
 				{
-				_localctx = new CurlyContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 16;
-				this.match(XCalcParser.T__0);
-				this.state = 17;
-				this.expr(0);
-				this.state = 18;
-				this.match(XCalcParser.T__2);
-				}
-				break;
-
-			case 3:
-				{
-				_localctx = new BracketContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 20;
-				this.match(XCalcParser.T__3);
-				this.state = 21;
-				this.expr(0);
-				this.state = 22;
-				this.match(XCalcParser.T__4);
-				}
-				break;
-
-			case 4:
-				{
-				_localctx = new AbsValueContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 24;
-				this.match(XCalcParser.T__5);
-				this.state = 25;
-				this.expr(0);
-				this.state = 26;
-				this.match(XCalcParser.T__5);
-				}
-				break;
-
-			case 5:
-				{
-				_localctx = new RootContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 28;
-				(_localctx as RootContext)._op = this.match(XCalcParser.ROOT);
-				this.state = 29;
-				this.match(XCalcParser.T__0);
-				this.state = 33;
-				this._errHandler.sync(this);
-				switch ( this.interpreter.adaptivePredict(this._input, 0, this._ctx) ) {
-				case 1:
-					{
-					this.state = 30;
-					(_localctx as RootContext)._left = this.expr(0);
-					this.state = 31;
-					this.match(XCalcParser.T__6);
-					}
-					break;
-				}
 				this.state = 35;
-				(_localctx as RootContext)._right = this.expr(0);
-				this.state = 36;
-				this.match(XCalcParser.T__1);
-				}
-				break;
-
-			case 6:
-				{
-				_localctx = new NegateContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 38;
-				this.match(XCalcParser.T__7);
+				this.expression();
 				this.state = 39;
-				this.expr(8);
-				}
-				break;
-
-			case 7:
-				{
-				_localctx = new FunctionContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 40;
-				(_localctx as FunctionContext)._fn = this.func();
-				this.state = 41;
-				this.match(XCalcParser.T__0);
-				this.state = 42;
-				(_localctx as FunctionContext)._arg = this.expr(0);
-				this.state = 45;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === XCalcParser.T__11) {
+				do {
 					{
-					this.state = 43;
-					this.match(XCalcParser.T__11);
-					this.state = 44;
-					(_localctx as FunctionContext)._arg2 = this.expr(0);
+					{
+					this.state = 36;
+					this.relOp();
+					this.state = 37;
+					this.expression();
 					}
-				}
-
-				this.state = 47;
-				this.match(XCalcParser.T__1);
-				}
-				break;
-
-			case 8:
-				{
-				_localctx = new ValContext(_localctx);
-				this._ctx = _localctx;
-				_prevctx = _localctx;
-				this.state = 49;
-				this.value();
+					}
+					this.state = 41;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.GT) | (1 << XCalcParser.GTE) | (1 << XCalcParser.LT) | (1 << XCalcParser.LTE) | (1 << XCalcParser.NE) | (1 << XCalcParser.EQ))) !== 0));
 				}
 				break;
 			}
-			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 75;
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public expression(): ExpressionContext {
+		let _localctx: ExpressionContext = new ExpressionContext(this._ctx, this.state);
+		this.enterRule(_localctx, 4, XCalcParser.RULE_expression);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 45;
+			this.multExpr();
+			this.state = 50;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 4, this._ctx);
-			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
-				if (_alt === 1) {
-					if (this._parseListeners != null) {
-						this.triggerExitRuleEvent();
+			_la = this._input.LA(1);
+			while (_la === XCalcParser.MINUS || _la === XCalcParser.PLUS) {
+				{
+				{
+				this.state = 46;
+				_la = this._input.LA(1);
+				if (!(_la === XCalcParser.MINUS || _la === XCalcParser.PLUS)) {
+				this._errHandler.recoverInline(this);
+				} else {
+					if (this._input.LA(1) === Token.EOF) {
+						this.matchedEOF = true;
 					}
-					_prevctx = _localctx;
-					{
-					this.state = 73;
-					this._errHandler.sync(this);
-					switch ( this.interpreter.adaptivePredict(this._input, 3, this._ctx) ) {
-					case 1:
-						{
-						_localctx = new PowerContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as PowerContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 52;
-						if (!(this.precpred(this._ctx, 11))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 11)");
-						}
-						this.state = 53;
-						(_localctx as PowerContext)._op = this.match(XCalcParser.POWER);
-						this.state = 54;
-						(_localctx as PowerContext)._right = this.expr(11);
-						}
-						break;
 
-					case 2:
-						{
-						_localctx = new MultiplyContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as MultiplyContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 55;
-						if (!(this.precpred(this._ctx, 9))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 9)");
-						}
-						this.state = 56;
-						(_localctx as MultiplyContext)._op = this.match(XCalcParser.MULT);
-						this.state = 57;
-						(_localctx as MultiplyContext)._right = this.expr(10);
-						}
-						break;
-
-					case 3:
-						{
-						_localctx = new DivideContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as DivideContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 58;
-						if (!(this.precpred(this._ctx, 7))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 7)");
-						}
-						this.state = 59;
-						(_localctx as DivideContext)._op = this.match(XCalcParser.T__8);
-						this.state = 60;
-						(_localctx as DivideContext)._right = this.expr(8);
-						}
-						break;
-
-					case 4:
-						{
-						_localctx = new ModuloContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as ModuloContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 61;
-						if (!(this.precpred(this._ctx, 6))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 6)");
-						}
-						this.state = 62;
-						(_localctx as ModuloContext)._op = this.match(XCalcParser.T__9);
-						this.state = 63;
-						(_localctx as ModuloContext)._right = this.expr(7);
-						}
-						break;
-
-					case 5:
-						{
-						_localctx = new AddContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as AddContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 64;
-						if (!(this.precpred(this._ctx, 5))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 5)");
-						}
-						this.state = 65;
-						(_localctx as AddContext)._op = this.match(XCalcParser.T__10);
-						this.state = 66;
-						(_localctx as AddContext)._right = this.expr(6);
-						}
-						break;
-
-					case 6:
-						{
-						_localctx = new SubtractContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as SubtractContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 67;
-						if (!(this.precpred(this._ctx, 4))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 4)");
-						}
-						this.state = 68;
-						(_localctx as SubtractContext)._op = this.match(XCalcParser.T__7);
-						this.state = 69;
-						(_localctx as SubtractContext)._right = this.expr(5);
-						}
-						break;
-
-					case 7:
-						{
-						_localctx = new AssignmentContext(new ExprContext(_parentctx, _parentState));
-						(_localctx as AssignmentContext)._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, XCalcParser.RULE_expr);
-						this.state = 70;
-						if (!(this.precpred(this._ctx, 1))) {
-							throw new FailedPredicateException(this, "this.precpred(this._ctx, 1)");
-						}
-						this.state = 71;
-						this.match(XCalcParser.T__12);
-						this.state = 72;
-						(_localctx as AssignmentContext)._right = this.expr(2);
-						}
-						break;
-					}
-					}
+					this._errHandler.reportMatch(this);
+					this.consume();
 				}
-				this.state = 77;
+				this.state = 47;
+				this.multExpr();
+				}
+				}
+				this.state = 52;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 4, this._ctx);
+				_la = this._input.LA(1);
 			}
 			}
 		}
@@ -441,30 +272,374 @@ export class XCalcParser extends Parser {
 			}
 		}
 		finally {
-			this.unrollRecursionContexts(_parentctx);
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public multExpr(): MultExprContext {
+		let _localctx: MultExprContext = new MultExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 6, XCalcParser.RULE_multExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 53;
+			this.expExpr();
+			this.state = 58;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.MULT) | (1 << XCalcParser.DIV) | (1 << XCalcParser.MODULO))) !== 0)) {
+				{
+				{
+				this.state = 54;
+				_la = this._input.LA(1);
+				if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.MULT) | (1 << XCalcParser.DIV) | (1 << XCalcParser.MODULO))) !== 0))) {
+				this._errHandler.recoverInline(this);
+				} else {
+					if (this._input.LA(1) === Token.EOF) {
+						this.matchedEOF = true;
+					}
+
+					this._errHandler.reportMatch(this);
+					this.consume();
+				}
+				this.state = 55;
+				this.expExpr();
+				}
+				}
+				this.state = 60;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public expExpr(): ExpExprContext {
+		let _localctx: ExpExprContext = new ExpExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 8, XCalcParser.RULE_expExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 61;
+			this.signedAtom();
+			this.state = 66;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === XCalcParser.POWER) {
+				{
+				{
+				this.state = 62;
+				this.match(XCalcParser.POWER);
+				this.state = 63;
+				this.signedAtom();
+				}
+				}
+				this.state = 68;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public signedAtom(): SignedAtomContext {
+		let _localctx: SignedAtomContext = new SignedAtomContext(this._ctx, this.state);
+		this.enterRule(_localctx, 10, XCalcParser.RULE_signedAtom);
+		try {
+			this.state = 75;
+			this._errHandler.sync(this);
+			switch (this._input.LA(1)) {
+			case XCalcParser.PLUS:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 69;
+				this.match(XCalcParser.PLUS);
+				this.state = 70;
+				this.signedAtom();
+				}
+				break;
+			case XCalcParser.MINUS:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 71;
+				this.match(XCalcParser.MINUS);
+				this.state = 72;
+				this.signedAtom();
+				}
+				break;
+			case XCalcParser.FN:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 73;
+				this.func();
+				}
+				break;
+			case XCalcParser.NUMBER:
+			case XCalcParser.ID:
+			case XCalcParser.CONSTANT:
+			case XCalcParser.ROOT:
+			case XCalcParser.LPAREN:
+			case XCalcParser.LBRKT:
+			case XCalcParser.LCURLY:
+			case XCalcParser.PIPE:
+				this.enterOuterAlt(_localctx, 4);
+				{
+				this.state = 74;
+				this.atom();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public atom(): AtomContext {
+		let _localctx: AtomContext = new AtomContext(this._ctx, this.state);
+		this.enterRule(_localctx, 12, XCalcParser.RULE_atom);
+		try {
+			this.state = 79;
+			this._errHandler.sync(this);
+			switch (this._input.LA(1)) {
+			case XCalcParser.NUMBER:
+			case XCalcParser.ID:
+			case XCalcParser.CONSTANT:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 77;
+				this.term();
+				}
+				break;
+			case XCalcParser.ROOT:
+			case XCalcParser.LPAREN:
+			case XCalcParser.LBRKT:
+			case XCalcParser.LCURLY:
+			case XCalcParser.PIPE:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 78;
+				this.group();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public term(): TermContext {
+		let _localctx: TermContext = new TermContext(this._ctx, this.state);
+		this.enterRule(_localctx, 14, XCalcParser.RULE_term);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 81;
+			_la = this._input.LA(1);
+			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.NUMBER) | (1 << XCalcParser.ID) | (1 << XCalcParser.CONSTANT))) !== 0))) {
+			this._errHandler.recoverInline(this);
+			} else {
+				if (this._input.LA(1) === Token.EOF) {
+					this.matchedEOF = true;
+				}
+
+				this._errHandler.reportMatch(this);
+				this.consume();
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public group(): GroupContext {
+		let _localctx: GroupContext = new GroupContext(this._ctx, this.state);
+		this.enterRule(_localctx, 16, XCalcParser.RULE_group);
+		try {
+			this.state = 109;
+			this._errHandler.sync(this);
+			switch (this._input.LA(1)) {
+			case XCalcParser.ROOT:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 83;
+				_localctx._op = this.match(XCalcParser.ROOT);
+				this.state = 84;
+				this.match(XCalcParser.LPAREN);
+				this.state = 88;
+				this._errHandler.sync(this);
+				switch ( this.interpreter.adaptivePredict(this._input, 9, this._ctx) ) {
+				case 1:
+					{
+					this.state = 85;
+					_localctx._left = this.expression();
+					this.state = 86;
+					this.match(XCalcParser.AMPERSAND);
+					}
+					break;
+				}
+				this.state = 90;
+				_localctx._right = this.expression();
+				this.state = 91;
+				this.match(XCalcParser.RPAREN);
+				}
+				break;
+			case XCalcParser.LPAREN:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 93;
+				this.match(XCalcParser.LPAREN);
+				this.state = 94;
+				this.expression();
+				this.state = 95;
+				this.match(XCalcParser.RPAREN);
+				}
+				break;
+			case XCalcParser.LBRKT:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 97;
+				this.match(XCalcParser.LBRKT);
+				this.state = 98;
+				this.expression();
+				this.state = 99;
+				this.match(XCalcParser.RBRKT);
+				}
+				break;
+			case XCalcParser.LCURLY:
+				this.enterOuterAlt(_localctx, 4);
+				{
+				this.state = 101;
+				this.match(XCalcParser.LCURLY);
+				this.state = 102;
+				this.expression();
+				this.state = 103;
+				this.match(XCalcParser.RCURLY);
+				}
+				break;
+			case XCalcParser.PIPE:
+				this.enterOuterAlt(_localctx, 5);
+				{
+				this.state = 105;
+				this.match(XCalcParser.PIPE);
+				this.state = 106;
+				this.signedAtom();
+				this.state = 107;
+				this.match(XCalcParser.PIPE);
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
 		}
 		return _localctx;
 	}
 	// @RuleVersion(0)
 	public func(): FuncContext {
 		let _localctx: FuncContext = new FuncContext(this._ctx, this.state);
-		this.enterRule(_localctx, 4, XCalcParser.RULE_func);
+		this.enterRule(_localctx, 18, XCalcParser.RULE_func);
 		let _la: number;
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 78;
+			this.state = 111;
+			this.match(XCalcParser.FN);
+			this.state = 112;
+			this.match(XCalcParser.LPAREN);
+			this.state = 113;
+			this.expression();
+			this.state = 116;
+			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.T__13) | (1 << XCalcParser.T__14) | (1 << XCalcParser.T__15) | (1 << XCalcParser.T__16) | (1 << XCalcParser.T__17) | (1 << XCalcParser.T__18) | (1 << XCalcParser.T__19) | (1 << XCalcParser.T__20) | (1 << XCalcParser.T__21) | (1 << XCalcParser.T__22) | (1 << XCalcParser.T__23) | (1 << XCalcParser.T__24) | (1 << XCalcParser.T__25) | (1 << XCalcParser.T__26) | (1 << XCalcParser.T__27) | (1 << XCalcParser.T__28))) !== 0))) {
-			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
+			if (_la === XCalcParser.COMMA) {
+				{
+				this.state = 114;
+				this.match(XCalcParser.COMMA);
+				this.state = 115;
+				this.expression();
 				}
-
-				this._errHandler.reportMatch(this);
-				this.consume();
 			}
+
+			this.state = 118;
+			this.match(XCalcParser.RPAREN);
 			}
 		}
 		catch (re) {
@@ -482,16 +657,16 @@ export class XCalcParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public value(): ValueContext {
-		let _localctx: ValueContext = new ValueContext(this._ctx, this.state);
-		this.enterRule(_localctx, 6, XCalcParser.RULE_value);
+	public relOp(): RelOpContext {
+		let _localctx: RelOpContext = new RelOpContext(this._ctx, this.state);
+		this.enterRule(_localctx, 20, XCalcParser.RULE_relOp);
 		let _la: number;
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 80;
+			this.state = 120;
 			_la = this._input.LA(1);
-			if (!(((((_la - 33)) & ~0x1F) === 0 && ((1 << (_la - 33)) & ((1 << (XCalcParser.NUMBER - 33)) | (1 << (XCalcParser.STRING - 33)) | (1 << (XCalcParser.ID - 33)))) !== 0))) {
+			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << XCalcParser.GT) | (1 << XCalcParser.GTE) | (1 << XCalcParser.LT) | (1 << XCalcParser.LTE) | (1 << XCalcParser.NE) | (1 << XCalcParser.EQ))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -518,77 +693,57 @@ export class XCalcParser extends Parser {
 		return _localctx;
 	}
 
-	public sempred(_localctx: RuleContext, ruleIndex: number, predIndex: number): boolean {
-		switch (ruleIndex) {
-		case 1:
-			return this.expr_sempred(_localctx as ExprContext, predIndex);
-		}
-		return true;
-	}
-	private expr_sempred(_localctx: ExprContext, predIndex: number): boolean {
-		switch (predIndex) {
-		case 0:
-			return this.precpred(this._ctx, 11);
-
-		case 1:
-			return this.precpred(this._ctx, 9);
-
-		case 2:
-			return this.precpred(this._ctx, 7);
-
-		case 3:
-			return this.precpred(this._ctx, 6);
-
-		case 4:
-			return this.precpred(this._ctx, 5);
-
-		case 5:
-			return this.precpred(this._ctx, 4);
-
-		case 6:
-			return this.precpred(this._ctx, 1);
-		}
-		return true;
-	}
-
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03(U\x04\x02\t\x02" +
-		"\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x03\x02\x03\x02\x03\x02\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x05\x03$\n\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x05\x030\n\x03\x03" +
-		"\x03\x03\x03\x03\x03\x05\x035\n\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x07\x03L" +
-		"\n\x03\f\x03\x0E\x03O\v\x03\x03\x04\x03\x04\x03\x05\x03\x05\x03\x05\x02" +
-		"\x02\x03\x04\x06\x02\x02\x04\x02\x06\x02\b\x02\x02\x04\x03\x02\x10\x1F" +
-		"\x04\x02##%&\x02`\x02\n\x03\x02\x02\x02\x044\x03\x02\x02\x02\x06P\x03" +
-		"\x02\x02\x02\bR\x03\x02\x02\x02\n\v\x05\x04\x03\x02\v\f\x07\x02\x02\x03" +
-		"\f\x03\x03\x02\x02\x02\r\x0E\b\x03\x01\x02\x0E\x0F\x07\x03\x02\x02\x0F" +
-		"\x10\x05\x04\x03\x02\x10\x11\x07\x04\x02\x02\x115\x03\x02\x02\x02\x12" +
-		"\x13\x07\x03\x02\x02\x13\x14\x05\x04\x03\x02\x14\x15\x07\x05\x02\x02\x15" +
-		"5\x03\x02\x02\x02\x16\x17\x07\x06\x02\x02\x17\x18\x05\x04\x03\x02\x18" +
-		"\x19\x07\x07\x02\x02\x195\x03\x02\x02\x02\x1A\x1B\x07\b\x02\x02\x1B\x1C" +
-		"\x05\x04\x03\x02\x1C\x1D\x07\b\x02\x02\x1D5\x03\x02\x02\x02\x1E\x1F\x07" +
-		"\"\x02\x02\x1F#\x07\x03\x02\x02 !\x05\x04\x03\x02!\"\x07\t\x02\x02\"$" +
-		"\x03\x02\x02\x02# \x03\x02\x02\x02#$\x03\x02\x02\x02$%\x03\x02\x02\x02" +
-		"%&\x05\x04\x03\x02&\'\x07\x04\x02\x02\'5\x03\x02\x02\x02()\x07\n\x02\x02" +
-		")5\x05\x04\x03\n*+\x05\x06\x04\x02+,\x07\x03\x02\x02,/\x05\x04\x03\x02" +
-		"-.\x07\x0E\x02\x02.0\x05\x04\x03\x02/-\x03\x02\x02\x02/0\x03\x02\x02\x02" +
-		"01\x03\x02\x02\x0212\x07\x04\x02\x0225\x03\x02\x02\x0235\x05\b\x05\x02" +
-		"4\r\x03\x02\x02\x024\x12\x03\x02\x02\x024\x16\x03\x02\x02\x024\x1A\x03" +
-		"\x02\x02\x024\x1E\x03\x02\x02\x024(\x03\x02\x02\x024*\x03\x02\x02\x02" +
-		"43\x03\x02\x02\x025M\x03\x02\x02\x0267\f\r\x02\x0278\x07!\x02\x028L\x05" +
-		"\x04\x03\r9:\f\v\x02\x02:;\x07 \x02\x02;L\x05\x04\x03\f<=\f\t\x02\x02" +
-		"=>\x07\v\x02\x02>L\x05\x04\x03\n?@\f\b\x02\x02@A\x07\f\x02\x02AL\x05\x04" +
-		"\x03\tBC\f\x07\x02\x02CD\x07\r\x02\x02DL\x05\x04\x03\bEF\f\x06\x02\x02" +
-		"FG\x07\n\x02\x02GL\x05\x04\x03\x07HI\f\x03\x02\x02IJ\x07\x0F\x02\x02J" +
-		"L\x05\x04\x03\x04K6\x03\x02\x02\x02K9\x03\x02\x02\x02K<\x03\x02\x02\x02" +
-		"K?\x03\x02\x02\x02KB\x03\x02\x02\x02KE\x03\x02\x02\x02KH\x03\x02\x02\x02" +
-		"LO\x03\x02\x02\x02MK\x03\x02\x02\x02MN\x03\x02\x02\x02N\x05\x03\x02\x02" +
-		"\x02OM\x03\x02\x02\x02PQ\t\x02\x02\x02Q\x07\x03\x02\x02\x02RS\t\x03\x02" +
-		"\x02S\t\x03\x02\x02\x02\x07#/4KM";
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x1F}\x04\x02" +
+		"\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04\x07" +
+		"\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x04\v\t\v\x04\f\t\f\x03\x02\x03\x02" +
+		"\x05\x02\x1B\n\x02\x03\x02\x03\x02\x03\x03\x03\x03\x03\x03\x06\x03\"\n" +
+		"\x03\r\x03\x0E\x03#\x03\x03\x03\x03\x03\x03\x03\x03\x06\x03*\n\x03\r\x03" +
+		"\x0E\x03+\x05\x03.\n\x03\x03\x04\x03\x04\x03\x04\x07\x043\n\x04\f\x04" +
+		"\x0E\x046\v\x04\x03\x05\x03\x05\x03\x05\x07\x05;\n\x05\f\x05\x0E\x05>" +
+		"\v\x05\x03\x06\x03\x06\x03\x06\x07\x06C\n\x06\f\x06\x0E\x06F\v\x06\x03" +
+		"\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x05\x07N\n\x07\x03\b\x03" +
+		"\b\x05\bR\n\b\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n\x03\n\x05\n[\n\n\x03" +
+		"\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03" +
+		"\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x05\np\n\n\x03\v\x03\v\x03\v\x03" +
+		"\v\x03\v\x05\vw\n\v\x03\v\x03\v\x03\f\x03\f\x03\f\x02\x02\x02\r\x02\x02" +
+		"\x04\x02\x06\x02\b\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14\x02\x16" +
+		"\x02\x02\x06\x03\x02\b\t\x04\x02\n\v\x0E\x0E\x03\x02\x04\x06\x03\x02\x19" +
+		"\x1E\x02\x82\x02\x1A\x03\x02\x02\x02\x04-\x03\x02\x02\x02\x06/\x03\x02" +
+		"\x02\x02\b7\x03\x02\x02\x02\n?\x03\x02\x02\x02\fM\x03\x02\x02\x02\x0E" +
+		"Q\x03\x02\x02\x02\x10S\x03\x02\x02\x02\x12o\x03\x02\x02\x02\x14q\x03\x02" +
+		"\x02\x02\x16z\x03\x02\x02\x02\x18\x1B\x05\x06\x04\x02\x19\x1B\x05\x04" +
+		"\x03\x02\x1A\x18\x03\x02\x02\x02\x1A\x19\x03\x02\x02\x02\x1B\x1C\x03\x02" +
+		"\x02\x02\x1C\x1D\x07\x02\x02\x03\x1D\x03\x03\x02\x02\x02\x1E!\x05\x06" +
+		"\x04\x02\x1F \x07\x0F\x02\x02 \"\x05\x06\x04\x02!\x1F\x03\x02\x02\x02" +
+		"\"#\x03\x02\x02\x02#!\x03\x02\x02\x02#$\x03\x02\x02\x02$.\x03\x02\x02" +
+		"\x02%)\x05\x06\x04\x02&\'\x05\x16\f\x02\'(\x05\x06\x04\x02(*\x03\x02\x02" +
+		"\x02)&\x03\x02\x02\x02*+\x03\x02\x02\x02+)\x03\x02\x02\x02+,\x03\x02\x02" +
+		"\x02,.\x03\x02\x02\x02-\x1E\x03\x02\x02\x02-%\x03\x02\x02\x02.\x05\x03" +
+		"\x02\x02\x02/4\x05\b\x05\x0201\t\x02\x02\x0213\x05\b\x05\x0220\x03\x02" +
+		"\x02\x0236\x03\x02\x02\x0242\x03\x02\x02\x0245\x03\x02\x02\x025\x07\x03" +
+		"\x02\x02\x0264\x03\x02\x02\x027<\x05\n\x06\x0289\t\x03\x02\x029;\x05\n" +
+		"\x06\x02:8\x03\x02\x02\x02;>\x03\x02\x02\x02<:\x03\x02\x02\x02<=\x03\x02" +
+		"\x02\x02=\t\x03\x02\x02\x02><\x03\x02\x02\x02?D\x05\f\x07\x02@A\x07\f" +
+		"\x02\x02AC\x05\f\x07\x02B@\x03\x02\x02\x02CF\x03\x02\x02\x02DB\x03\x02" +
+		"\x02\x02DE\x03\x02\x02\x02E\v\x03\x02\x02\x02FD\x03\x02\x02\x02GH\x07" +
+		"\t\x02\x02HN\x05\f\x07\x02IJ\x07\b\x02\x02JN\x05\f\x07\x02KN\x05\x14\v" +
+		"\x02LN\x05\x0E\b\x02MG\x03\x02\x02\x02MI\x03\x02\x02\x02MK\x03\x02\x02" +
+		"\x02ML\x03\x02\x02\x02N\r\x03\x02\x02\x02OR\x05\x10\t\x02PR\x05\x12\n" +
+		"\x02QO\x03\x02\x02\x02QP\x03\x02\x02\x02R\x0F\x03\x02\x02\x02ST\t\x04" +
+		"\x02\x02T\x11\x03\x02\x02\x02UV\x07\r\x02\x02VZ\x07\x10\x02\x02WX\x05" +
+		"\x06\x04\x02XY\x07\x18\x02\x02Y[\x03\x02\x02\x02ZW\x03\x02\x02\x02Z[\x03" +
+		"\x02\x02\x02[\\\x03\x02\x02\x02\\]\x05\x06\x04\x02]^\x07\x11\x02\x02^" +
+		"p\x03\x02\x02\x02_`\x07\x10\x02\x02`a\x05\x06\x04\x02ab\x07\x11\x02\x02" +
+		"bp\x03\x02\x02\x02cd\x07\x12\x02\x02de\x05\x06\x04\x02ef\x07\x13\x02\x02" +
+		"fp\x03\x02\x02\x02gh\x07\x14\x02\x02hi\x05\x06\x04\x02ij\x07\x15\x02\x02" +
+		"jp\x03\x02\x02\x02kl\x07\x16\x02\x02lm\x05\f\x07\x02mn\x07\x16\x02\x02" +
+		"np\x03\x02\x02\x02oU\x03\x02\x02\x02o_\x03\x02\x02\x02oc\x03\x02\x02\x02" +
+		"og\x03\x02\x02\x02ok\x03\x02\x02\x02p\x13\x03\x02\x02\x02qr\x07\x03\x02" +
+		"\x02rs\x07\x10\x02\x02sv\x05\x06\x04\x02tu\x07\x17\x02\x02uw\x05\x06\x04" +
+		"\x02vt\x03\x02\x02\x02vw\x03\x02\x02\x02wx\x03\x02\x02\x02xy\x07\x11\x02" +
+		"\x02y\x15\x03\x02\x02\x02z{\t\x05\x02\x02{\x17\x03\x02\x02\x02\x0E\x1A" +
+		"#+-4<DMQZov";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!XCalcParser.__ATN) {
@@ -600,32 +755,35 @@ export class XCalcParser extends Parser {
 
 }
 
-export class XcalcExprContext extends ParserRuleContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
+export class XcalcContext extends ParserRuleContext {
 	public EOF(): TerminalNode { return this.getToken(XCalcParser.EOF, 0); }
+	public expression(): ExpressionContext | undefined {
+		return this.tryGetRuleContext(0, ExpressionContext);
+	}
+	public equation(): EquationContext | undefined {
+		return this.tryGetRuleContext(0, EquationContext);
+	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return XCalcParser.RULE_xcalcExpr; }
+	public get ruleIndex(): number { return XCalcParser.RULE_xcalc; }
 	// @Override
 	public enterRule(listener: XCalcListener): void {
-		if (listener.enterXcalcExpr) {
-			listener.enterXcalcExpr(this);
+		if (listener.enterXcalc) {
+			listener.enterXcalc(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: XCalcListener): void {
-		if (listener.exitXcalcExpr) {
-			listener.exitXcalcExpr(this);
+		if (listener.exitXcalc) {
+			listener.exitXcalc(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitXcalcExpr) {
-			return visitor.visitXcalcExpr(this);
+		if (visitor.visitXcalc) {
+			return visitor.visitXcalc(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -633,513 +791,36 @@ export class XcalcExprContext extends ParserRuleContext {
 }
 
 
-export class ExprContext extends ParserRuleContext {
+export class EquationContext extends ParserRuleContext {
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return XCalcParser.RULE_expr; }
-	public copyFrom(ctx: ExprContext): void {
+	public get ruleIndex(): number { return XCalcParser.RULE_equation; }
+	public copyFrom(ctx: EquationContext): void {
 		super.copyFrom(ctx);
 	}
 }
-export class ParenContext extends ExprContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterParen) {
-			listener.enterParen(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitParen) {
-			listener.exitParen(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitParen) {
-			return visitor.visitParen(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class CurlyContext extends ExprContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterCurly) {
-			listener.enterCurly(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitCurly) {
-			listener.exitCurly(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitCurly) {
-			return visitor.visitCurly(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class BracketContext extends ExprContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterBracket) {
-			listener.enterBracket(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitBracket) {
-			listener.exitBracket(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitBracket) {
-			return visitor.visitBracket(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class AbsValueContext extends ExprContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterAbsValue) {
-			listener.enterAbsValue(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitAbsValue) {
-			listener.exitAbsValue(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitAbsValue) {
-			return visitor.visitAbsValue(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class PowerContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
+export class AssignmentContext extends EquationContext {
+	public expression(): ExpressionContext[];
+	public expression(i: number): ExpressionContext;
+	public expression(i?: number): ExpressionContext | ExpressionContext[] {
 		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
+			return this.getRuleContexts(ExpressionContext);
 		} else {
-			return this.getRuleContext(i, ExprContext);
+			return this.getRuleContext(i, ExpressionContext);
 		}
 	}
-	public POWER(): TerminalNode { return this.getToken(XCalcParser.POWER, 0); }
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterPower) {
-			listener.enterPower(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitPower) {
-			listener.exitPower(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitPower) {
-			return visitor.visitPower(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class RootContext extends ExprContext {
-	public _op: Token;
-	public _left: ExprContext;
-	public _right: ExprContext;
-	public ROOT(): TerminalNode { return this.getToken(XCalcParser.ROOT, 0); }
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
+	public EQUALS(): TerminalNode[];
+	public EQUALS(i: number): TerminalNode;
+	public EQUALS(i?: number): TerminalNode | TerminalNode[] {
 		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
+			return this.getTokens(XCalcParser.EQUALS);
 		} else {
-			return this.getRuleContext(i, ExprContext);
+			return this.getToken(XCalcParser.EQUALS, i);
 		}
 	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterRoot) {
-			listener.enterRoot(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitRoot) {
-			listener.exitRoot(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitRoot) {
-			return visitor.visitRoot(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class MultiplyContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public MULT(): TerminalNode { return this.getToken(XCalcParser.MULT, 0); }
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterMultiply) {
-			listener.enterMultiply(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitMultiply) {
-			listener.exitMultiply(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitMultiply) {
-			return visitor.visitMultiply(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class NegateContext extends ExprContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterNegate) {
-			listener.enterNegate(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitNegate) {
-			listener.exitNegate(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitNegate) {
-			return visitor.visitNegate(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class DivideContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterDivide) {
-			listener.enterDivide(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitDivide) {
-			listener.exitDivide(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitDivide) {
-			return visitor.visitDivide(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class ModuloContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterModulo) {
-			listener.enterModulo(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitModulo) {
-			listener.exitModulo(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitModulo) {
-			return visitor.visitModulo(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class AddContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterAdd) {
-			listener.enterAdd(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitAdd) {
-			listener.exitAdd(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitAdd) {
-			return visitor.visitAdd(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class SubtractContext extends ExprContext {
-	public _left: ExprContext;
-	public _op: Token;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterSubtract) {
-			listener.enterSubtract(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitSubtract) {
-			listener.exitSubtract(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitSubtract) {
-			return visitor.visitSubtract(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class FunctionContext extends ExprContext {
-	public _fn: FuncContext;
-	public _arg: ExprContext;
-	public _arg2: ExprContext;
-	public func(): FuncContext {
-		return this.getRuleContext(0, FuncContext);
-	}
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterFunction) {
-			listener.enterFunction(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitFunction) {
-			listener.exitFunction(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitFunction) {
-			return visitor.visitFunction(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class ValContext extends ExprContext {
-	public value(): ValueContext {
-		return this.getRuleContext(0, ValueContext);
-	}
-	constructor(ctx: ExprContext) {
-		super(ctx.parent, ctx.invokingState);
-		this.copyFrom(ctx);
-	}
-	// @Override
-	public enterRule(listener: XCalcListener): void {
-		if (listener.enterVal) {
-			listener.enterVal(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: XCalcListener): void {
-		if (listener.exitVal) {
-			listener.exitVal(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitVal) {
-			return visitor.visitVal(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-export class AssignmentContext extends ExprContext {
-	public _left: ExprContext;
-	public _right: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(ctx: ExprContext) {
+	constructor(ctx: EquationContext) {
 		super(ctx.parent, ctx.invokingState);
 		this.copyFrom(ctx);
 	}
@@ -1164,9 +845,402 @@ export class AssignmentContext extends ExprContext {
 		}
 	}
 }
+export class EqualityContext extends EquationContext {
+	public expression(): ExpressionContext[];
+	public expression(i: number): ExpressionContext;
+	public expression(i?: number): ExpressionContext | ExpressionContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExpressionContext);
+		} else {
+			return this.getRuleContext(i, ExpressionContext);
+		}
+	}
+	public relOp(): RelOpContext[];
+	public relOp(i: number): RelOpContext;
+	public relOp(i?: number): RelOpContext | RelOpContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(RelOpContext);
+		} else {
+			return this.getRuleContext(i, RelOpContext);
+		}
+	}
+	constructor(ctx: EquationContext) {
+		super(ctx.parent, ctx.invokingState);
+		this.copyFrom(ctx);
+	}
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterEquality) {
+			listener.enterEquality(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitEquality) {
+			listener.exitEquality(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitEquality) {
+			return visitor.visitEquality(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ExpressionContext extends ParserRuleContext {
+	public multExpr(): MultExprContext[];
+	public multExpr(i: number): MultExprContext;
+	public multExpr(i?: number): MultExprContext | MultExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(MultExprContext);
+		} else {
+			return this.getRuleContext(i, MultExprContext);
+		}
+	}
+	public PLUS(): TerminalNode[];
+	public PLUS(i: number): TerminalNode;
+	public PLUS(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.PLUS);
+		} else {
+			return this.getToken(XCalcParser.PLUS, i);
+		}
+	}
+	public MINUS(): TerminalNode[];
+	public MINUS(i: number): TerminalNode;
+	public MINUS(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.MINUS);
+		} else {
+			return this.getToken(XCalcParser.MINUS, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_expression; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterExpression) {
+			listener.enterExpression(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitExpression) {
+			listener.exitExpression(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitExpression) {
+			return visitor.visitExpression(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class MultExprContext extends ParserRuleContext {
+	public expExpr(): ExpExprContext[];
+	public expExpr(i: number): ExpExprContext;
+	public expExpr(i?: number): ExpExprContext | ExpExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExpExprContext);
+		} else {
+			return this.getRuleContext(i, ExpExprContext);
+		}
+	}
+	public MULT(): TerminalNode[];
+	public MULT(i: number): TerminalNode;
+	public MULT(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.MULT);
+		} else {
+			return this.getToken(XCalcParser.MULT, i);
+		}
+	}
+	public DIV(): TerminalNode[];
+	public DIV(i: number): TerminalNode;
+	public DIV(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.DIV);
+		} else {
+			return this.getToken(XCalcParser.DIV, i);
+		}
+	}
+	public MODULO(): TerminalNode[];
+	public MODULO(i: number): TerminalNode;
+	public MODULO(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.MODULO);
+		} else {
+			return this.getToken(XCalcParser.MODULO, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_multExpr; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterMultExpr) {
+			listener.enterMultExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitMultExpr) {
+			listener.exitMultExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitMultExpr) {
+			return visitor.visitMultExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ExpExprContext extends ParserRuleContext {
+	public signedAtom(): SignedAtomContext[];
+	public signedAtom(i: number): SignedAtomContext;
+	public signedAtom(i?: number): SignedAtomContext | SignedAtomContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(SignedAtomContext);
+		} else {
+			return this.getRuleContext(i, SignedAtomContext);
+		}
+	}
+	public POWER(): TerminalNode[];
+	public POWER(i: number): TerminalNode;
+	public POWER(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.POWER);
+		} else {
+			return this.getToken(XCalcParser.POWER, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_expExpr; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterExpExpr) {
+			listener.enterExpExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitExpExpr) {
+			listener.exitExpExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitExpExpr) {
+			return visitor.visitExpExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class SignedAtomContext extends ParserRuleContext {
+	public PLUS(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.PLUS, 0); }
+	public signedAtom(): SignedAtomContext | undefined {
+		return this.tryGetRuleContext(0, SignedAtomContext);
+	}
+	public MINUS(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.MINUS, 0); }
+	public func(): FuncContext | undefined {
+		return this.tryGetRuleContext(0, FuncContext);
+	}
+	public atom(): AtomContext | undefined {
+		return this.tryGetRuleContext(0, AtomContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_signedAtom; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterSignedAtom) {
+			listener.enterSignedAtom(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitSignedAtom) {
+			listener.exitSignedAtom(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitSignedAtom) {
+			return visitor.visitSignedAtom(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class AtomContext extends ParserRuleContext {
+	public term(): TermContext | undefined {
+		return this.tryGetRuleContext(0, TermContext);
+	}
+	public group(): GroupContext | undefined {
+		return this.tryGetRuleContext(0, GroupContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_atom; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterAtom) {
+			listener.enterAtom(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitAtom) {
+			listener.exitAtom(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitAtom) {
+			return visitor.visitAtom(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class TermContext extends ParserRuleContext {
+	public NUMBER(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.NUMBER, 0); }
+	public CONSTANT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.CONSTANT, 0); }
+	public ID(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.ID, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_term; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterTerm) {
+			listener.enterTerm(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitTerm) {
+			listener.exitTerm(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitTerm) {
+			return visitor.visitTerm(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class GroupContext extends ParserRuleContext {
+	public _op: Token;
+	public _left: ExpressionContext;
+	public _right: ExpressionContext;
+	public LPAREN(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.LPAREN, 0); }
+	public RPAREN(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.RPAREN, 0); }
+	public ROOT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.ROOT, 0); }
+	public expression(): ExpressionContext[];
+	public expression(i: number): ExpressionContext;
+	public expression(i?: number): ExpressionContext | ExpressionContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExpressionContext);
+		} else {
+			return this.getRuleContext(i, ExpressionContext);
+		}
+	}
+	public AMPERSAND(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.AMPERSAND, 0); }
+	public LBRKT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.LBRKT, 0); }
+	public RBRKT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.RBRKT, 0); }
+	public LCURLY(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.LCURLY, 0); }
+	public RCURLY(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.RCURLY, 0); }
+	public PIPE(): TerminalNode[];
+	public PIPE(i: number): TerminalNode;
+	public PIPE(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(XCalcParser.PIPE);
+		} else {
+			return this.getToken(XCalcParser.PIPE, i);
+		}
+	}
+	public signedAtom(): SignedAtomContext | undefined {
+		return this.tryGetRuleContext(0, SignedAtomContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return XCalcParser.RULE_group; }
+	// @Override
+	public enterRule(listener: XCalcListener): void {
+		if (listener.enterGroup) {
+			listener.enterGroup(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: XCalcListener): void {
+		if (listener.exitGroup) {
+			listener.exitGroup(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
+		if (visitor.visitGroup) {
+			return visitor.visitGroup(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
 
 
 export class FuncContext extends ParserRuleContext {
+	public FN(): TerminalNode { return this.getToken(XCalcParser.FN, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(XCalcParser.LPAREN, 0); }
+	public expression(): ExpressionContext[];
+	public expression(i: number): ExpressionContext;
+	public expression(i?: number): ExpressionContext | ExpressionContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExpressionContext);
+		} else {
+			return this.getRuleContext(i, ExpressionContext);
+		}
+	}
+	public RPAREN(): TerminalNode { return this.getToken(XCalcParser.RPAREN, 0); }
+	public COMMA(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.COMMA, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
@@ -1195,31 +1269,34 @@ export class FuncContext extends ParserRuleContext {
 }
 
 
-export class ValueContext extends ParserRuleContext {
-	public NUMBER(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.NUMBER, 0); }
-	public STRING(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.STRING, 0); }
-	public ID(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.ID, 0); }
+export class RelOpContext extends ParserRuleContext {
+	public GT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.GT, 0); }
+	public GTE(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.GTE, 0); }
+	public LT(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.LT, 0); }
+	public LTE(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.LTE, 0); }
+	public NE(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.NE, 0); }
+	public EQ(): TerminalNode | undefined { return this.tryGetToken(XCalcParser.EQ, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return XCalcParser.RULE_value; }
+	public get ruleIndex(): number { return XCalcParser.RULE_relOp; }
 	// @Override
 	public enterRule(listener: XCalcListener): void {
-		if (listener.enterValue) {
-			listener.enterValue(this);
+		if (listener.enterRelOp) {
+			listener.enterRelOp(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: XCalcListener): void {
-		if (listener.exitValue) {
-			listener.exitValue(this);
+		if (listener.exitRelOp) {
+			listener.exitRelOp(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: XCalcVisitor<Result>): Result {
-		if (visitor.visitValue) {
-			return visitor.visitValue(this);
+		if (visitor.visitRelOp) {
+			return visitor.visitRelOp(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

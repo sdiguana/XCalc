@@ -4,6 +4,7 @@ import { Unary, UnaryOperator } from "./Unary";
 import { VariableMap } from "./VariableMap";
 
 export enum BinaryOperator {
+  None = "None",
   //Assignment
   AssignTo = "AssignTo",
   //Arithmitic
@@ -125,11 +126,15 @@ export class Binary extends BaseExpression {
     return this;
   }
 
+  public getVariables(): BaseExpression[] {
+    return this.left.getVariables().concat(this.right.getVariables());
+  }
+
   private Modulo(leftIsNumber: boolean, rightIsNumber: boolean): void {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
-        (this.left.evaluated as Value).value %
-          (this.right.evaluated as Value).value
+        Number((this.left.evaluated as Value).value) %
+          Number((this.right.evaluated as Value).value)
       );
     else if (leftIsNumber)
       this.evaluated = new Binary(
@@ -158,8 +163,8 @@ export class Binary extends BaseExpression {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
         Math.pow(
-          (this.left.evaluated as Value).value,
-          (this.right.evaluated as Value).value
+          Number((this.left.evaluated as Value).value),
+          Number((this.right.evaluated as Value).value)
         )
       );
     else if (leftIsNumber)
@@ -189,8 +194,8 @@ export class Binary extends BaseExpression {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
         Math.pow(
-          (this.right.evaluated as Value).value, //reverse L & R For Power Fn
-          1 / (this.left.evaluated as Value).value
+          Number((this.right.evaluated as Value).value), //reverse L & R For Power Fn
+          1 / Number((this.left.evaluated as Value).value)
         )
       );
     //TODO VERIFY DIVIDE BY ZERO, add i functionality?
@@ -228,8 +233,8 @@ export class Binary extends BaseExpression {
     }
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
-        (this.left.evaluated as Value).value *
-          (this.right.evaluated as Value).value
+        Number((this.left.evaluated as Value).value) *
+          Number((this.right.evaluated as Value).value)
       );
     else if (leftIsNumber)
       this.evaluated = new Binary(
@@ -257,8 +262,8 @@ export class Binary extends BaseExpression {
   private Divide(leftIsNumber: boolean, rightIsNumber: boolean): void {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
-        (this.left.evaluated as Value).value /
-          (this.right.evaluated as Value).value
+        Number((this.left.evaluated as Value).value) /
+          Number((this.right.evaluated as Value).value)
       );
     else if (leftIsNumber)
       this.evaluated = new Binary(
@@ -290,11 +295,16 @@ export class Binary extends BaseExpression {
   ): void {
     const le = this.left.evaluated as Value;
     const re = this.right.evaluated as Value;
-
     //Case: Both L & R are Values, therefore this is a resolvable expression
     if (le && re) {
-      const hasLeft = assignedValues.has((this.left as Value).value);
-      const hasRight = assignedValues.has((this.right as Value).value);
+      const hasLeft = false;
+      const hasRight = false;
+      if (this.left.constructor.name == "Value") {
+        assignedValues.has((this.left as Value).value.toString());
+      }
+      if (this.right.constructor.name == "Value") {
+        assignedValues.has((this.right as Value).value.toString());
+      }
       const leftNeedsAssigned = !hasLeft && !leftIsNumber;
       const rightNeedsAssigned = !hasRight && !rightIsNumber;
 
@@ -315,15 +325,35 @@ export class Binary extends BaseExpression {
           : new Value(re.value);
       }
       if (leftNeedsAssigned)
-        assignedValues.add(
-          (this.left as Value).value,
-          leftIsNumber ? le.value : re.value
+        console.log(
+          `BINARY.ASSIGN# : ${Number((this.left as Value).value)}, ${
+            leftIsNumber ? Number(le.value) : Number(re.value)
+          }`
         );
+      console.log(
+        `BINARY.ASSIGN : ${(this.left as Value).value}, ${
+          leftIsNumber ? le.value : re.value
+        }`
+      );
+      assignedValues.add(
+        Number((this.left as Value).value),
+        leftIsNumber ? Number(le.value) : Number(re.value)
+      );
       if (rightNeedsAssigned)
-        assignedValues.add(
-          (this.right as Value).value,
-          leftIsNumber ? le.value : re.value
+        console.log(
+          `BINARY.ASSIGN# : ${Number((this.right as Value).value)}, ${
+            leftIsNumber ? Number(le.value) : Number(re.value)
+          }`
         );
+      console.log(
+        `BINARY.ASSIGN : ${(this.right as Value).value}, ${
+          leftIsNumber ? le.value : re.value
+        }`
+      );
+      assignedValues.add(
+        Number((this.right as Value).value),
+        leftIsNumber ? Number(le.value) : Number(re.value)
+      );
     } else {
       //One or both are *not* Values, unable to reduce further.
 
@@ -408,8 +438,8 @@ export class Binary extends BaseExpression {
   private Add(leftIsNumber: boolean, rightIsNumber: boolean): void {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
-        (this.left.evaluated as Value).value +
-          (this.right.evaluated as Value).value
+        Number((this.left.evaluated as Value).value) +
+          Number((this.right.evaluated as Value).value)
       );
     else if (leftIsNumber)
       this.evaluated = new Binary(
@@ -437,8 +467,8 @@ export class Binary extends BaseExpression {
   private Subtract(leftIsNumber: boolean, rightIsNumber: boolean): void {
     if (leftIsNumber && rightIsNumber)
       this.evaluated = new Value(
-        (this.left.evaluated as Value).value -
-          (this.right.evaluated as Value).value
+        Number((this.left.evaluated as Value).value) -
+          Number((this.right.evaluated as Value).value)
       );
     else if (leftIsNumber)
       this.evaluated = new Binary(

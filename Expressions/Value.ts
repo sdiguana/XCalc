@@ -1,7 +1,7 @@
 import { BaseExpression } from "./BaseExpression";
 import { VariableMap } from "./VariableMap";
 export class Value extends BaseExpression {
-  public value: any;
+  public value: string | number | boolean;
   public valueType: ValueType = ValueType.Unknown;
   public isResult: boolean = false;
   constructor(value: any) {
@@ -15,6 +15,7 @@ export class Value extends BaseExpression {
   }
   private _setValueType(): void {
     let v = this.value;
+    if (!v) throw new Error("Value is undefined in Value._setValueType()");
     if (!isNaN(Number(v))) {
       this.valueType = ValueType.Number;
       this.value = Number(v);
@@ -46,12 +47,17 @@ export class Value extends BaseExpression {
       if (this.value == String.fromCharCode(parseInt("03c0", 16)))
         this.evaluated = new Value(Math.PI);
       else if (assignedValues.has(this.value.toString())) {
-        let n = assignedValues.get(this.value);
+        let n = assignedValues.get(this.value.toString());
         this.evaluated = n ? new Value(n) : new Value(this.value);
       } else this.evaluated = new Value(this.value);
     } else this.evaluated = new Value(this.value); //TODO: Refactor this to not repeat
     this.evaluated.isResult = true;
     return this;
+  }
+  public getVariables(): BaseExpression[] {
+    const retVal = [];
+    if (this.valueType == ValueType.Variable) retVal.push(this);
+    return retVal;
   }
 }
 export enum ValueType {

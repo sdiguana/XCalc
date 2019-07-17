@@ -1,14 +1,18 @@
 {
   "compilerOptions": {
     "target": "es2015",
-    "module": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
     "allowJs": false,
     "outDir": "./dist/",
     "removeComments": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "declaration": true
   },
   "exclude": ["node_modules", "**/*.spec.ts", "./dist/*"]
 }

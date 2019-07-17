@@ -25,14 +25,14 @@ var XCalc = {
 //     });
 //   });
 // });
-describe("chain Assignment", function() {
-  describe("#chain-Assign", function() {
-    it("sb:6", function() {
-      let eg = new XCalc.ExpressionGroup(["d=4", "2+d"]).evaluate();
-      assert.equal(eg.expressions[1].print(true), 6);
-    });
-  });
-});
+// describe("chain Assignment", function() {
+//   describe("#chain-Assign", function() {
+//     it("sb:6", function() {
+//       let eg = new XCalc.ExpressionGroup(["d=4", "2+d"]).evaluate();
+//       assert.equal(eg.expressions[1].print(true), 6);
+//     });
+//   });
+// });
 
 describe("chain Assignment #2", function() {
   describe("#chain-Assign", function() {
@@ -43,7 +43,22 @@ describe("chain Assignment #2", function() {
         "d=D - 2*t",
         "f=d"
       ]).evaluate();
+      console.log(".........................................");
+      console.log(eg.expressions[3].printExpr(true));
+      console.log(eg.variableMap.print().join("\n"));
+      console.log(".........................................");
       assert.equal(eg.expressions[3].print(true), 2);
     });
   });
 });
+
+// describe("chain Assignment #3", function() {
+//   describe("#chain-Assign", function() {
+//     it("sb:3,3,9", function() {
+//       let eg = new XCalc.ExpressionGroup(["n=d", "d=3", "q=n*d"]).evaluate();
+//       assert.equal(eg.expressions[0].print(true), 3);
+//       assert.equal(eg.expressions[1].print(true), 3);
+//       assert.equal(eg.expressions[2].print(true), 9);
+//     });
+//   });
+// });

@@ -8,6 +8,8 @@ export abstract class BaseExpression {
   public abstract evaluate(assignedValues: VariableMap): BaseExpression;
   public abstract print(printResult: boolean): string;
   public abstract printExpr(printResult: boolean): string;
+  public abstract getVariables(): BaseExpression[];
+
   public static isNumber(expr: BaseExpression): boolean {
     const val = expr as Value;
     if (expr instanceof Value && val.valueType == ValueType.Number) {

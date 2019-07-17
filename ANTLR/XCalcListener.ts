@@ -3,25 +3,19 @@
 
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
-import { ParenContext } from "./XCalcParser";
-import { CurlyContext } from "./XCalcParser";
-import { BracketContext } from "./XCalcParser";
-import { AbsValueContext } from "./XCalcParser";
-import { PowerContext } from "./XCalcParser";
-import { RootContext } from "./XCalcParser";
-import { MultiplyContext } from "./XCalcParser";
-import { NegateContext } from "./XCalcParser";
-import { DivideContext } from "./XCalcParser";
-import { ModuloContext } from "./XCalcParser";
-import { AddContext } from "./XCalcParser";
-import { SubtractContext } from "./XCalcParser";
-import { FunctionContext } from "./XCalcParser";
-import { ValContext } from "./XCalcParser";
 import { AssignmentContext } from "./XCalcParser";
-import { XcalcExprContext } from "./XCalcParser";
-import { ExprContext } from "./XCalcParser";
+import { EqualityContext } from "./XCalcParser";
+import { XcalcContext } from "./XCalcParser";
+import { EquationContext } from "./XCalcParser";
+import { ExpressionContext } from "./XCalcParser";
+import { MultExprContext } from "./XCalcParser";
+import { ExpExprContext } from "./XCalcParser";
+import { SignedAtomContext } from "./XCalcParser";
+import { AtomContext } from "./XCalcParser";
+import { TermContext } from "./XCalcParser";
+import { GroupContext } from "./XCalcParser";
 import { FuncContext } from "./XCalcParser";
-import { ValueContext } from "./XCalcParser";
+import { RelOpContext } from "./XCalcParser";
 
 
 /**
@@ -30,221 +24,129 @@ import { ValueContext } from "./XCalcParser";
  */
 export interface XCalcListener extends ParseTreeListener {
 	/**
-	 * Enter a parse tree produced by the `paren`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterParen?: (ctx: ParenContext) => void;
-	/**
-	 * Exit a parse tree produced by the `paren`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitParen?: (ctx: ParenContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `curly`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterCurly?: (ctx: CurlyContext) => void;
-	/**
-	 * Exit a parse tree produced by the `curly`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitCurly?: (ctx: CurlyContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `bracket`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterBracket?: (ctx: BracketContext) => void;
-	/**
-	 * Exit a parse tree produced by the `bracket`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitBracket?: (ctx: BracketContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `absValue`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterAbsValue?: (ctx: AbsValueContext) => void;
-	/**
-	 * Exit a parse tree produced by the `absValue`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitAbsValue?: (ctx: AbsValueContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `power`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterPower?: (ctx: PowerContext) => void;
-	/**
-	 * Exit a parse tree produced by the `power`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitPower?: (ctx: PowerContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `root`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterRoot?: (ctx: RootContext) => void;
-	/**
-	 * Exit a parse tree produced by the `root`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitRoot?: (ctx: RootContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `multiply`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterMultiply?: (ctx: MultiplyContext) => void;
-	/**
-	 * Exit a parse tree produced by the `multiply`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitMultiply?: (ctx: MultiplyContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `negate`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterNegate?: (ctx: NegateContext) => void;
-	/**
-	 * Exit a parse tree produced by the `negate`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitNegate?: (ctx: NegateContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `divide`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterDivide?: (ctx: DivideContext) => void;
-	/**
-	 * Exit a parse tree produced by the `divide`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitDivide?: (ctx: DivideContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `modulo`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterModulo?: (ctx: ModuloContext) => void;
-	/**
-	 * Exit a parse tree produced by the `modulo`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitModulo?: (ctx: ModuloContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `add`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterAdd?: (ctx: AddContext) => void;
-	/**
-	 * Exit a parse tree produced by the `add`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitAdd?: (ctx: AddContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `subtract`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterSubtract?: (ctx: SubtractContext) => void;
-	/**
-	 * Exit a parse tree produced by the `subtract`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitSubtract?: (ctx: SubtractContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `function`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterFunction?: (ctx: FunctionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `function`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitFunction?: (ctx: FunctionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `val`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterVal?: (ctx: ValContext) => void;
-	/**
-	 * Exit a parse tree produced by the `val`
-	 * labeled alternative in `XCalcParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitVal?: (ctx: ValContext) => void;
-
-	/**
 	 * Enter a parse tree produced by the `assignment`
-	 * labeled alternative in `XCalcParser.expr`.
+	 * labeled alternative in `XCalcParser.equation`.
 	 * @param ctx the parse tree
 	 */
 	enterAssignment?: (ctx: AssignmentContext) => void;
 	/**
 	 * Exit a parse tree produced by the `assignment`
-	 * labeled alternative in `XCalcParser.expr`.
+	 * labeled alternative in `XCalcParser.equation`.
 	 * @param ctx the parse tree
 	 */
 	exitAssignment?: (ctx: AssignmentContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `XCalcParser.xcalcExpr`.
+	 * Enter a parse tree produced by the `equality`
+	 * labeled alternative in `XCalcParser.equation`.
 	 * @param ctx the parse tree
 	 */
-	enterXcalcExpr?: (ctx: XcalcExprContext) => void;
+	enterEquality?: (ctx: EqualityContext) => void;
 	/**
-	 * Exit a parse tree produced by `XCalcParser.xcalcExpr`.
+	 * Exit a parse tree produced by the `equality`
+	 * labeled alternative in `XCalcParser.equation`.
 	 * @param ctx the parse tree
 	 */
-	exitXcalcExpr?: (ctx: XcalcExprContext) => void;
+	exitEquality?: (ctx: EqualityContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `XCalcParser.expr`.
+	 * Enter a parse tree produced by `XCalcParser.xcalc`.
 	 * @param ctx the parse tree
 	 */
-	enterExpr?: (ctx: ExprContext) => void;
+	enterXcalc?: (ctx: XcalcContext) => void;
 	/**
-	 * Exit a parse tree produced by `XCalcParser.expr`.
+	 * Exit a parse tree produced by `XCalcParser.xcalc`.
 	 * @param ctx the parse tree
 	 */
-	exitExpr?: (ctx: ExprContext) => void;
+	exitXcalc?: (ctx: XcalcContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.equation`.
+	 * @param ctx the parse tree
+	 */
+	enterEquation?: (ctx: EquationContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.equation`.
+	 * @param ctx the parse tree
+	 */
+	exitEquation?: (ctx: EquationContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterExpression?: (ctx: ExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitExpression?: (ctx: ExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.multExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterMultExpr?: (ctx: MultExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.multExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitMultExpr?: (ctx: MultExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.expExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterExpExpr?: (ctx: ExpExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.expExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitExpExpr?: (ctx: ExpExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.signedAtom`.
+	 * @param ctx the parse tree
+	 */
+	enterSignedAtom?: (ctx: SignedAtomContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.signedAtom`.
+	 * @param ctx the parse tree
+	 */
+	exitSignedAtom?: (ctx: SignedAtomContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.atom`.
+	 * @param ctx the parse tree
+	 */
+	enterAtom?: (ctx: AtomContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.atom`.
+	 * @param ctx the parse tree
+	 */
+	exitAtom?: (ctx: AtomContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.term`.
+	 * @param ctx the parse tree
+	 */
+	enterTerm?: (ctx: TermContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.term`.
+	 * @param ctx the parse tree
+	 */
+	exitTerm?: (ctx: TermContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `XCalcParser.group`.
+	 * @param ctx the parse tree
+	 */
+	enterGroup?: (ctx: GroupContext) => void;
+	/**
+	 * Exit a parse tree produced by `XCalcParser.group`.
+	 * @param ctx the parse tree
+	 */
+	exitGroup?: (ctx: GroupContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `XCalcParser.func`.
@@ -258,14 +160,14 @@ export interface XCalcListener extends ParseTreeListener {
 	exitFunc?: (ctx: FuncContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `XCalcParser.value`.
+	 * Enter a parse tree produced by `XCalcParser.relOp`.
 	 * @param ctx the parse tree
 	 */
-	enterValue?: (ctx: ValueContext) => void;
+	enterRelOp?: (ctx: RelOpContext) => void;
 	/**
-	 * Exit a parse tree produced by `XCalcParser.value`.
+	 * Exit a parse tree produced by `XCalcParser.relOp`.
 	 * @param ctx the parse tree
 	 */
-	exitValue?: (ctx: ValueContext) => void;
+	exitRelOp?: (ctx: RelOpContext) => void;
 }
 

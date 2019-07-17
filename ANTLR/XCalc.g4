@@ -1,26 +1,37 @@
+// Credit to Tom Everett on grammar design. Grammar under BSD License.
+// https://github.com/antlr/grammars-v4/blob/master/calculator/calculator.g4
 grammar XCalc;
 
-//https://github.com/tunnelvisionlabs/antlr4ts
-xcalcExpr: expr EOF;
+xcalc: (expression | equation) EOF;
 
-expr:
-	'(' expr ')'											# paren
-	| '(' expr '}'											# curly
-	| '[' expr ']'											# bracket
-	| '|' expr '|'											# absValue
-	| <assoc = right>left = expr op = POWER right = expr	# power
-	| op = ROOT '(' (left = expr '&')? right = expr ')'		# root //left is root-power
-	| left = expr op = MULT right = expr					# multiply
-	//| left = expr right = expr								# implicitMultiply
-	| '-' expr											# negate
-	| left = expr op = '/' right = expr					# divide
-	| left = expr op = '%' right = expr					# modulo
-	| left = expr op = '+' right = expr					# add
-	| left = expr op = '-' right = expr					# subtract
-	| fn = func '(' arg = expr (',' arg2 = expr)? ')'	# function
-	| value												# val
-	| left = expr '=' right = expr						# assignment; //how to deal with multiple-assignment equations?
-func:
+equation:
+	expression (EQUALS expression)+		# assignment
+	| expression (relOp expression)+	# equality;
+
+expression: multExpr ((PLUS | MINUS) multExpr)*;
+multExpr: expExpr ((MULT | DIV | MODULO) expExpr)*;
+expExpr: signedAtom (POWER signedAtom)*;
+
+signedAtom: PLUS signedAtom | MINUS signedAtom | func | atom;
+
+atom: term | group;
+term: NUMBER | CONSTANT | ID;
+group:
+	op = ROOT LPAREN (left = expression AMPERSAND)? right = expression RPAREN
+	| LPAREN expression RPAREN
+	| LBRKT expression RBRKT
+	| LCURLY expression RCURLY
+	| PIPE signedAtom PIPE;
+
+// # root //L is 1/Pwr 
+
+func: FN LPAREN expression (COMMA expression)? RPAREN;
+
+/*
+ * Lexer Rules
+ */
+relOp: GT | GTE | LT | LTE | NE | EQ;
+FN:
 	'cos'
 	| 'sin'
 	| 'tan'
@@ -38,22 +49,48 @@ func:
 	| 'atan2'
 	| 'log'
 	| 'pow';
-value: NUMBER | STRING | ID;
 
-/*
- * Lexer Rules
- */
-MULT:
-	('*' | '\u2219' | '\u00d7'); // '\u2219' = bullet | '\u00d7' = cross
+//TERMS
+NUMBER: DIGIT+ ('.' DIGIT*)?;
+ID: LETTER+ ('_'? (LETTER | DIGIT)+)*;
+CONSTANT: PI;
+PI: '\u03c0' | 'PI';
+
+//OPERATORS
+MINUS: '-';
+PLUS: '+';
+MULT: ('*' | '\u2219' | '\u00d7');
+// '\u2219' = bullet | '\u00d7' = cross
+DIV: ('/' | '\u00f7');
 POWER: ('^' | '**');
 ROOT: ('sqrt' | '\u221a');
-NUMBER: '-'? DIGIT* '.' DIGIT* E? | '-'? DIGIT+ E?;
-E: ('E' | 'e') ('+' | '-')? DIGIT+;
-STRING: '"' ID (ID | DIGIT)* '"';
-ID: Char ('_'? (Char | DIGIT)+)* | PI;
-PI: '\u03c0'; //lower pi
+MODULO: '%';
+EQUALS: '=';
+
+//GROUPING
+LPAREN: '(';
+RPAREN: ')';
+LBRKT: '[';
+RBRKT: ']';
+LCURLY: '{';
+RCURLY: '}';
+// LANGBRACE: '\u27E8'; RANGBRACE: '\u27E9';
+
+//MISC
+PIPE: '|';
+COMMA: ',';
+AMPERSAND: '&';
+
+//EQUALITY
+GT: '>';
+GTE: '>=' | '\u2265';
+LT: '<';
+LTE: '\u2264';
+NE: '!=' | '\u2260';
+EQ: '==';
 
 fragment DIGIT: [0-9];
+fragment LETTER: [a-zA-Z];
+//fragment UNICODE: '\u0370' ..'\u03FF';
 
-fragment Char: ([a-zA-Z] | '\u0370' ..'\u03FF');
 WS: (' ' | '\r' | '\t' | '\u000C' | '\n') -> channel(HIDDEN);

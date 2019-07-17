@@ -87,12 +87,15 @@ export class Function1 extends BaseExpression {
 
     if (BaseExpression.isNumber(this.argument.evaluated)) {
       var value = (this.argument.evaluated as Value).value;
-      this.evaluated = new Value(this._operatorFunc(value));
+      this.evaluated = new Value(this._operatorFunc(Number(value)));
     } else {
       this.evaluated = new Function1(this.argument, this.operator);
     }
     this.evaluated.isResult = true;
     return this;
+  }
+  public getVariables(): BaseExpression[] {
+    return this.argument.getVariables();
   }
 
   public print(printResult: boolean): string {

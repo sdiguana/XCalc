@@ -51,7 +51,9 @@ export class Function2 extends BaseExpression {
     if (arg1IsNumber && arg2IsNumber) {
       var value = (this.argument1.evaluated as Value).value;
       var value2 = (this.argument2.evaluated as Value).value;
-      this.evaluated = new Value(this._operatorFunc(value, value2));
+      this.evaluated = new Value(
+        this._operatorFunc(Number(value), Number(value2))
+      );
     } else if (arg1IsNumber) {
       var value = (this.argument1.evaluated as Value).value;
       this.evaluated = new Function2(
@@ -76,6 +78,10 @@ export class Function2 extends BaseExpression {
     this.evaluated.isResult = true;
     return this;
   }
+  public getVariables(): BaseExpression[] {
+    return this.argument1.getVariables().concat(this.argument2.getVariables());
+  }
+
   public print(printResult: boolean): string {
     if (this.isResult) printResult = false; //Already a result, ensure no circular reference
     if (printResult) {

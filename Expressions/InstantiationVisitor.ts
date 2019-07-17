@@ -7,193 +7,189 @@ import { BaseExpression } from "./BaseExpression";
 
 import { XCalcVisitor } from "../ANTLR/XCalcVisitor";
 import {
-  ModuloContext,
-  PowerContext,
-  ValContext,
   AssignmentContext,
-  FunctionContext,
-  RootContext,
-  MultiplyContext,
-  //ImplicitMultiplyContext,
-  DivideContext,
-  AddContext,
-  SubtractContext,
-  ParenContext,
-  AbsValueContext,
-  NegateContext
+  EqualityContext,
+  AtomContext,
+  ExpExprContext,
+  FuncContext,
+  GroupContext,
+  EquationContext,
+  ExpressionContext,
+  MultExprContext,
+  //RelOpContext,
+  SignedAtomContext,
+  TermContext,
+  XcalcContext
 } from "../ANTLR/XCalcParser";
 import { AbstractParseTreeVisitor } from "antlr4ts/tree";
+import { RuleContext } from "antlr4ts";
 
 export class InstantiationVisitor
   extends AbstractParseTreeVisitor<BaseExpression>
   implements XCalcVisitor<BaseExpression> {
   protected defaultResult(): BaseExpression {
-    return new Value(undefined);
+    throw new Error(
+      "Instantiation Visitor Reached defaultResult()... was not able to parse context."
+    );
   }
-  private _writeToConsole = false;
+
   public AssignedVariables: Map<string, number> = new Map();
   public AllValues: Value[] = [];
 
-  public visitModulo(ctx: ModuloContext): BaseExpression {
-    var right = this.visit(ctx._right);
-    var left = this.visit(ctx._left);
-    if (this._writeToConsole)
-      console.log(
-        `"Modulo Context: [${ctx._left.text}] ^ [${ctx._right.text}]`
-      );
-    return new Binary(left, right, BinaryOperator.Modulo);
+  public visitXCalc(ctx: XcalcContext): BaseExpression {
+    let value = ctx.expression(); // || ctx.equation();
+    return this.visit(value!);
   }
-
-  public visitPower(ctx: PowerContext): BaseExpression {
-    var right = this.visit(ctx._right);
-    var left = this.visit(ctx._left);
-    if (this._writeToConsole)
-      console.log(
-        `Exponent Context: [${ctx._left.text}] ^ [${ctx._right.text}]`
-      );
-    return new Binary(left, right, BinaryOperator.Power);
-  }
-  public visitVal(ctx: ValContext): BaseExpression {
-    //console.log($"Val Context: [{ctx.text}]");
-    var v = new Value(ctx.text);
-    this.AllValues.push(v);
-    if (
-      v.evaluated != null &&
-      (v.evaluated as Value).valueType == ValueType.Number &&
-      v.valueType == ValueType.Variable
-    )
-      this.AssignedVariables.set(
-        v.value.toString(),
-        (v.evaluated as Value).value
-      );
-    return v;
+  public visitEquation(ctx: EquationContext): BaseExpression {
+    throw new Error("visitEquation not implemented");
   }
   public visitAssignment(ctx: AssignmentContext): BaseExpression {
-    if (this._writeToConsole)
-      console.log(
-        `Assignment Context: [${ctx._left.text}] = [${ctx._right.text}]`
+    let children = ctx.expression().map(x => this.visit(x));
+    if (children.length != 2) {
+      throw new Error(
+        `Entered visitAssignment, but #Expressions != 2, ${
+          children.length
+        }. \n${ctx.text}`
       );
-    var left = this.visit(ctx._left);
-    var right = this.visit(ctx._right);
-    if (left instanceof Value && right instanceof Value) {
-      var lVal = left as Value;
-      var rVal = right as Value;
+    }
+    //register assigned variables:
+    let l = children[0] as Value;
+    let r = children[1] as Value;
+    if (l && r) {
       if (
-        lVal.valueType == ValueType.Variable &&
-        rVal.valueType == ValueType.Number
-      )
-        this.AssignedVariables.set(lVal.value.toString(), rVal.value);
-      else if (
-        rVal.valueType == ValueType.Variable &&
-        lVal.valueType == ValueType.Number
-      )
-        this.AssignedVariables.set(rVal.value.toString(), lVal.value);
-      //both are variables:
-      else {
-        this.AssignedVariables.set(rVal.value, lVal.value);
-        this.AssignedVariables.set(lVal.value, rVal.value);
+        l.valueType == ValueType.Number &&
+        r.valueType == ValueType.Variable
+      ) {
+        this.AssignedVariables.set(r.value.toString(), Number(l.value));
+      } else if (
+        r.valueType == ValueType.Number &&
+        l.valueType == ValueType.Variable
+      ) {
+        this.AssignedVariables.set(l.value.toString(), Number(r.value));
       }
     }
 
-    return new Binary(left, right, BinaryOperator.AssignTo);
+    return new Binary(children[0], children[1], BinaryOperator.AssignTo);
   }
-  public visitFunction(ctx: FunctionContext): BaseExpression {
-    var arg = this.visit(ctx._arg);
-    let arg2 = null;
-    if (ctx._arg2 != null) {
-      arg2 = this.visit(ctx._arg2);
-      return new Function2(arg, arg2, ctx.func().text);
+  public visitEquality(ctx: EqualityContext): BaseExpression {
+    let children = ctx.expression().map(x => this.visit(x));
+    let relOp = ctx.relOp()[0];
+    if (children.length != 2) {
+      throw new Error(
+        `Entered visitEquality, but #Expressions != 2, ${children.length}. \n${
+          ctx.text
+        }`
+      );
     }
-    if (this._writeToConsole)
-      console.log(`Function Context: [${ctx._fn.text}]  [${ctx._arg.text}]`);
-    return new Function1(arg, ctx.func().text);
-  }
-  public visitRoot(ctx: RootContext): BaseExpression {
-    var right = this.visit(ctx._right);
-    let left = new Value(2) as BaseExpression; //Default to Sqrt
-    if (ctx._left != null) left = this.visit(ctx._left);
-    if (this._writeToConsole)
-      console.log(
-        `Root Context: Root-Power:[${left.toString()}]  Value:[${
-          ctx._right.text
-        }]`
-      );
-    return new Binary(left, right, BinaryOperator.NthRoot, "\u221a");
-  }
-  public visitMultiply(ctx: MultiplyContext): BaseExpression {
-    var left = this.visit(ctx._left);
-    var right = this.visit(ctx._right);
-    if (this._writeToConsole)
-      console.log(
-        `Explicit Multiply: [${ctx._left.text}] ${ctx._op.text} [${
-          ctx._right.text
-        }]`
-      );
-    return new Binary(left, right, BinaryOperator.Multiply, ctx._op.text);
-  }
-  // public visitImplicitMultiply(ctx: ImplicitMultiplyContext): BaseExpression {
-  //   var left = this.visit(ctx._left);
-  //   var right = this.visit(ctx._right);
+    let operator = BinaryOperator.None;
+    if (relOp.EQ) operator = BinaryOperator.EqualTo;
+    else if (relOp.GT) operator = BinaryOperator.GreaterThan;
+    else if (relOp.GTE) operator = BinaryOperator.GreaterThanOrEqual;
+    else if (relOp.LT) operator = BinaryOperator.LessThan;
+    else if (relOp.LTE) operator = BinaryOperator.LessThanOrEqual;
+    else if (relOp.NE) operator = BinaryOperator.NotEqual;
+    //else throw new Error(`Fell through operator detection in visitEquality`);
 
-  //   var leftIsNumber = BaseExpression.isNumber(left);
-  //   var rightIsNumber = BaseExpression.isNumber(right);
-  //   var rightAsUnary = right as Unary;
-  //   //Case: 2-1 is treated as 2 impl -1 instead of subtract:
-  //   if (leftIsNumber && rightIsNumber) {
-  //     var lVal = (left as Value).value;
-  //     var rVal = (right as Value).value;
-  //     if (rVal > 0)
-  //       throw new Error(
-  //         `Expected Right Value Negative in Implicit Multiply Guard. L:${lVal}, R:${rVal}`
-  //       );
-  //     return new Binary(left, right, BinaryOperator.Add, "+");
-  //   }
-  //   //Case a-2 is treated as a * (-2), also for a-b
-  //   if (rightIsNumber) {
-  //     var rVal = (right as Value).value;
-  //     if (rVal < 0) return new Binary(left, right, BinaryOperator.Add);
-  //   } else if (rightAsUnary != null) {
-  //     if (rightAsUnary.operator == UnaryOperator.Negate)
-  //       return new Binary(left, right, BinaryOperator.Add);
-  //   }
+    return new Binary(children[0], children[1], operator);
+  }
+  public visitExpression(ctx: ExpressionContext): BaseExpression {
+    let children = ctx.multExpr().map(x => this.visit(x));
+    this._checkChildCount(this.visitExpression, ctx, children.length);
+    if (children.length == 1) return children[0];
 
-  //   if (this._writeToConsole)
-  //     console.log(
-  //       `Implicit Multiply: [${ctx._left.text}] * [${ctx._right.text}]`
-  //     );
-  //   return new Binary(left, right, BinaryOperator.Multiply, null);
-  // }
-  public visitDivide(ctx: DivideContext): BaseExpression {
-    var left = this.visit(ctx._left);
-    var right = this.visit(ctx._right);
-    if (this._writeToConsole)
-      console.log(`Divide Context: [${ctx._left.text}] / [${ctx._right.text}]`);
-    return new Binary(left, right, BinaryOperator.Divide, "/");
+    let operator = BinaryOperator.None;
+    if (ctx.PLUS().length > 0) operator = BinaryOperator.Add;
+    else if (ctx.MINUS().length > 0) operator = BinaryOperator.Subtract;
+
+    return new Binary(children[0], children[1], operator);
   }
-  public visitAdd(ctx: AddContext): BaseExpression {
-    var left = this.visit(ctx._left);
-    var right = this.visit(ctx._right);
-    if (this._writeToConsole)
-      console.log(`Add: [${ctx._left.text}] + [${ctx._right.text}]`);
-    return new Binary(left, right, BinaryOperator.Add, "+");
+  public visitMultExpr(ctx: MultExprContext): BaseExpression {
+    let children = ctx.expExpr().map(x => this.visit(x));
+    this._checkChildCount(this.visitMultExpr, ctx, children.length);
+    if (children.length == 1) return children[0];
+
+    let operator: BinaryOperator = BinaryOperator.None;
+    if (ctx.DIV().length > 0) operator = BinaryOperator.Divide;
+    else if (ctx.MODULO().length > 0) operator = BinaryOperator.Modulo;
+    else if (ctx.MULT().length > 0) operator = BinaryOperator.Multiply;
+
+    return new Binary(children[0], children[1], operator);
   }
-  public visitSubtract(ctx: SubtractContext): BaseExpression {
-    var left = this.visit(ctx._left);
-    var right = this.visit(ctx._right);
-    if (this._writeToConsole)
-      console.log(`Add: [${ctx._left.text}] - [${ctx._right.text}]`);
-    return new Binary(left, right, BinaryOperator.Subtract, "-");
+  public visitExpExpr(ctx: ExpExprContext): BaseExpression {
+    let children = ctx.signedAtom().map(x => this.visit(x));
+    this._checkChildCount(this.visitExpExpr, ctx, children.length);
+    if (children.length == 1) return children[0];
+
+    let operator: BinaryOperator = BinaryOperator.None;
+    if (ctx.POWER().length > 0) operator = BinaryOperator.Power;
+    return new Binary(children[0], children[1], operator);
   }
-  public visitParen(ctx: ParenContext): BaseExpression {
-    if (this._writeToConsole) console.log(`Paren Context: [${ctx.text}]`);
-    return new Unary(this.visit(ctx.expr()), UnaryOperator.Parenthesis);
+  public visitSignedAtom(ctx: SignedAtomContext): BaseExpression {
+    let v = this.visit(ctx.signedAtom()! || ctx.atom()! || ctx.func()!);
+    if (ctx.MINUS()) {
+      v = new Binary(new Value(-1), v, BinaryOperator.Multiply);
+    }
+    return v;
   }
-  public visitAbsValue(ctx: AbsValueContext): BaseExpression {
-    if (this._writeToConsole) console.log(`AbsValue Context: [${ctx.text}]`);
-    return new Unary(this.visit(ctx.expr()), UnaryOperator.AbsoluteValue);
+  public visitAtom(ctx: AtomContext): BaseExpression {
+    return this.visit(ctx.group()! || ctx.term()!);
   }
-  public visitNegate(ctx: NegateContext): BaseExpression {
-    if (this._writeToConsole) console.log(`Negate Context: [${ctx.text}]`);
-    return new Unary(this.visit(ctx.expr()), UnaryOperator.Negate);
+  public visitTerm(ctx: TermContext): BaseExpression {
+    const term = ctx.NUMBER() || ctx.ID() || ctx.CONSTANT();
+    const content = term!.text;
+    if (!content)
+      console.error(`visitTerm resulted in empty text content. ${term}`);
+    let val = new Value(content);
+    this.AllValues.push(val);
+    return val;
+  }
+  public visitFunc(ctx: FuncContext): BaseExpression {
+    const expressions = ctx.expression();
+    const eNum = expressions.length;
+    let exp0 = this.visit(expressions[0]);
+    this._checkChildCount(this.visitFunc, ctx, eNum);
+
+    if (eNum == 1) {
+      return new Function1(exp0, ctx.FN().text);
+    }
+
+    return new Function2(exp0, this.visit(expressions[1]), ctx.FN().text);
+  }
+  public visitGroup(ctx: GroupContext): BaseExpression {
+    if (ctx.expression().length > 0) {
+      const expression = ctx.expression();
+      const expr0 = this.visit(expression[0]);
+      if (ctx.ROOT()) {
+        if (ctx.AMPERSAND()) {
+          return new Binary(
+            expr0,
+            this.visit(expression[1]),
+            BinaryOperator.NthRoot
+          );
+        }
+        return new Function1(expr0, "sqrt");
+      } else if (ctx.LBRKT()) return new Unary(expr0, UnaryOperator.Brackets);
+      else if (ctx.LPAREN()) {
+        return new Unary(expr0, UnaryOperator.Parenthesis);
+      } else if (ctx.LCURLY()) return new Unary(expr0, UnaryOperator.Curlies);
+    } else if (ctx.signedAtom)
+      return new Unary(
+        this.visit(ctx.signedAtom()!),
+        UnaryOperator.AbsoluteValue
+      );
+    throw new Error(`Fell through GroupContext ${ctx.text}`);
+  }
+  /** Verifies count == 1 or 2 */
+  private _checkChildCount(fn: Function, ctx: RuleContext, count: number) {
+    if (count == 0)
+      throw new Error(`${fn.name} Failed (no child nodes) ${ctx.text}`);
+    else if (count > 2)
+      throw new Error(
+        `${
+          fn.name
+        } has ${count} arguments. Only 1 or 2 args supported. Original  ${
+          ctx.text
+        }`
+      );
   }
 }

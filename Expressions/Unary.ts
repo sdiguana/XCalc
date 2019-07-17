@@ -4,8 +4,11 @@ import { BaseExpression } from "./BaseExpression";
 import { VariableMap } from "./VariableMap";
 
 export enum UnaryOperator {
+  None = "None",
   Negate = "Negate",
   Parenthesis = "Parenthesis",
+  Brackets = "Brackets",
+  Curlies = "Curlies",
   AbsoluteValue = "AbsoluteValue"
 }
 
@@ -26,7 +29,7 @@ export class Unary extends BaseExpression {
       const iVal = this.inner.evaluated as Value;
       if (iVal) {
         if (iVal.valueType == ValueType.Number) {
-          this.evaluated = new Value(iVal.value * -1);
+          this.evaluated = new Value(Number(iVal.value) * -1);
         } else if (iVal.valueType == ValueType.Boolean) {
           this.evaluated = new Value(!iVal.value);
         } else {
@@ -43,18 +46,25 @@ export class Unary extends BaseExpression {
         binVal.evaluate(assignedValues);
         this.evaluated = binVal.evaluated;
       }
-    } else if (this.operator == UnaryOperator.Parenthesis) {
+    } else if (
+      this.operator == UnaryOperator.Parenthesis ||
+      this.operator == UnaryOperator.Curlies ||
+      this.operator == UnaryOperator.Brackets
+    ) {
       this.evaluated = this.inner.evaluated;
     } else if (this.operator == UnaryOperator.AbsoluteValue) {
       if (BaseExpression.isNumber(this.inner.evaluated)) {
         const val = this.inner.evaluated as Value;
         //TODO: FIX INSTANCEOF IF I NEED OR NOT
-        this.evaluated = new Value(Math.abs(val.value));
+        this.evaluated = new Value(Math.abs(Number(val.value)));
       } else
         this.evaluated = new Unary(this.inner, UnaryOperator.AbsoluteValue);
     } else throw new Error("Not implemented.");
     this.evaluated.isResult = true;
     return this;
+  }
+  public getVariables(): BaseExpression[] {
+    return this.inner.getVariables();
   }
   public print(printResult: boolean): string {
     if (this.isResult) printResult = false; //Already a result, ensure no circular reference
@@ -70,6 +80,10 @@ export class Unary extends BaseExpression {
         return `-${inner}`;
       case UnaryOperator.Parenthesis:
         return `(${inner})`;
+      case UnaryOperator.Curlies:
+        return `{${inner}}`;
+      case UnaryOperator.Brackets:
+        return `[${inner}]`;
       default:
         return "unary fell through print()";
     }

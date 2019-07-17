@@ -26,36 +26,24 @@ export class VariableMap {
     this._map.set(key, values);
   }
   public add(a: string | number, b: string | number): void {
-    this._add(a.toString(), b);
-    this._add(b.toString(), a);
-    // const aIsNumber = Number(a) ? true : false;
-    // const bIsNumber = Number(b) ? true : false;
-    // const aIsContained = this._map.has(a.toString());
-    // const bIsContained = this._map.has(b.toString());
-    // console.log(`add(${a}, ${b})`);
-    // if (aIsNumber && bIsNumber) {
-    //   return;
-    // } else if (!aIsNumber && !bIsNumber) {
-    //   //neither are numbers
-    //   if (!aIsContained && !bIsContained) {
-    //     this._add(a.toString(), b);
-    //     this._add(b.toString(), a);
-    //   } else if (aIsContained) {
-    //     this._add(a.toString(), b);
-    //   } else if (bIsContained) {
-    //     this._add(b.toString(), a);
-    //   }
-    // } else {
-    //   //one is a number
-    //   const key = aIsNumber ? b.toString() : a.toString();
-    //   const value = aIsNumber ? a : b;
-    //   const kVals = this._map.has(key) ? this._map.get(key) : [];
-    //   const valIsContained = kVals!.indexOf(value) != -1;
-    //   //prevent duplicates:
-    //   if (!valIsContained) {
-    //     this._add(key, value);
-    //   }
-    // }
+    const aStr = a.toString();
+    const bStr = b.toString();
+    this._add(aStr, b);
+    this._add(bStr, a);
+    let number = this.get(aStr) || this.get(bStr);
+    if (number) {
+      this._add(aStr, number);
+      this._add(bStr, number);
+      //propagate # through all equality references:
+      [...new Set(this._getAll(aStr).concat(this._getAll(bStr)))]
+        .filter(x => !Number(x))
+        .forEach(x => {
+          const sStr = x.toString();
+          if (this.has(sStr)) {
+            this._add(sStr, number!);
+          }
+        });
+    }
   }
   /** adds each member of second map into existing map. Returns Self. */
   public concat(map: VariableMap): VariableMap {
@@ -75,60 +63,26 @@ export class VariableMap {
   public get(key: string): number | undefined {
     if (this._map.has(key)) {
       let set = this._map.get(key)!;
+
       for (const s of set) {
-        if (Number(s)) return Number(s);
+        if (Number(s)) {
+          return Number(s);
+        }
       }
     }
     return undefined;
-
-    // let assignments: Array<string | number> = [];
-    // for (const kv of this._map) {
-    //   const vArr = kv[1];
-    //   const k = kv[0];
-    //   const i = vArr.indexOf(key);
-    //   if (i != -1) {
-    //     assignments!.push(k);
-    //     assignments = assignments!.concat(vArr.splice(i, 1));
-    //   } else if (k == key) {
-    //     assignments = assignments!.concat(vArr.splice(i, 1));
-    //   }
-    // }
-    // return assignments!;
   }
-  // public getNumber(key: string): number | undefined {
-  //   return this.get(key);
-  //   // console.log(`getNumber(${key})`);
-  //   // this.print();
-  //   // let res = this._get(key);
-  //   // this._map.entries;
-  //   // console.log(res);
-  //   // for (const r of res) {
-  //   //   if (Number(r)) return Number(r);
-  //   // }
-  //   // let availableLinks: (string | number)[] = this._get(key);
-  //   // const visited: (string | number)[] = [];
-
-  //   // while (availableLinks.length > 0) {
-  //   //   for (let i = availableLinks.length; i >= 0; i--) {
-  //   //     let link = availableLinks[i]; //.toString();
-  //   //     if (!link) continue;
-  //   //     availableLinks.splice(i, 1);
-  //   //     if (visited.includes(link)) {
-  //   //       continue;
-  //   //     }
-  //   //     visited.push(link);
-  //   //     if (Number(link)) return Number(link);
-
-  //   //     availableLinks = availableLinks.concat(this._get(link.toString()));
-  //   //   }
-  //   // }
-  //   return undefined;
-  // }
-  public print(): any {
-    let retVal = [];
+  private _getAll(key: string): (string | number)[] {
+    if (this._map.has(key)) {
+      return [...this._map.get(key)!];
+    }
+    return [];
+  }
+  /** Returns contents of variable map in an array, format: [key :: val1, val2, ...] */
+  public print(): string[] {
+    const retVal: string[] = [];
     for (const m of this._map) {
-      //console.log(m);
-      let set = [];
+      const set = [];
       for (const s of m[1].values()) {
         set.push(s);
       }
